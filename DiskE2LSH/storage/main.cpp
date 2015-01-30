@@ -6,10 +6,23 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
-#define FPATH "/home/rgirdhar/Work/Projects/001_DetectionRetrieval/BgMatchesObjDet/tempdata/selsearch_feats_all_normalized.txt"
+//#define FPATH "/home/rgirdhar/Work/Projects/001_DetectionRetrieval/BgMatchesObjDet/tempdata/selsearch_feats_all_normalized.txt"
+#define FPATH "/home/rgirdhar/Work/Projects/001_DetectionRetrieval/BgMatchesObjDet/tempdata/marked_feats_all.txt"
+
+void normalize(vector<float>& feat) {
+  float norm = 0;
+  for (auto it = feat.begin(); it != feat.end(); it++) {
+    norm += *it * (*it);
+  }
+  norm = sqrt(norm);
+  for (auto it = feat.begin(); it != feat.end(); it++) {
+    *it = *it / norm; 
+  }
+
+}
 
 void readAndIndex(fs::path fpath) {
-  DiskVector<vector<float>> d("selsearch_feats_normalized");
+  DiskVector<vector<float>> d("marked_feats_normalized");
   ifstream ifs(fpath.string().c_str(), ios::in);
   string line;
   float el;
@@ -20,6 +33,7 @@ void readAndIndex(fs::path fpath) {
     while (iss >> el) {
       feat.push_back(el);
     }
+    normalize(feat);
     d.Put(i, feat);
     i++;
     cout << "done for " << i << endl;

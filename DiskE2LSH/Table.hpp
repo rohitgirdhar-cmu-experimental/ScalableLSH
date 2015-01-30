@@ -14,6 +14,12 @@ public:
   void insert(const vector<float>& feat, int label) {
     vector<int> hash;
     lshFunc.computeHash(feat, hash);
+/*    cout << label << " :::";
+    for ( int i = 0 ;i < hash.size(); i ++) {
+      cout << hash[i] << " ";
+    }
+    cout << endl;*/
+
     auto pos = index.find(hash);
     if (pos == index.end()) {
       unordered_set<int> lst; 
