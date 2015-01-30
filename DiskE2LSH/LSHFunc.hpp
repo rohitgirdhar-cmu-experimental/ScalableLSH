@@ -1,5 +1,5 @@
-#ifndef LSH_HPP
-#define LSH_HPP
+#ifndef LSHFUNC_HPP
+#define LSHFUNC_HPP
 
 #include <Eigen/Dense>
 #include <boost/random.hpp>

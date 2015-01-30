@@ -3,6 +3,7 @@
 #include "storage/DiskVector.hpp"
 #include "Table.hpp"
 #include "LSHFunc.hpp"
+#include "LSH.hpp"
 
 using namespace std;
 namespace fs = boost::filesystem;
@@ -35,10 +36,11 @@ int main(int argc, char* argv[]) {
   LSHFunc L(20, 9216);
   vector<float> feat;
   temp.Get(5, feat);
-  Table t(20, 9216);
-  t.insert(feat, 1);
+  
+  LSH l(20, 10, 9216);
+  l.insert(feat, 1);
   unordered_set<int> t2;
-  t.search(feat, t2);
+  l.search(feat, t2);
   for (auto it = t2.begin(); it != t2.end(); it++) {
     cout << *it << " ";
   }

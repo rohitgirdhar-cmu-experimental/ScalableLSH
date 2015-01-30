@@ -11,16 +11,16 @@ class Table {
   map<vector<int>, unordered_set<int>> index;
 public:
   Table(int k, int dim) : lshFunc(k, dim) {}
-  void insert(const vector<float>& feat, int val) {
+  void insert(const vector<float>& feat, int label) {
     vector<int> hash;
     lshFunc.computeHash(feat, hash);
     auto pos = index.find(hash);
     if (pos == index.end()) {
       unordered_set<int> lst; 
-      lst.insert(val);
+      lst.insert(label);
       index[hash] = lst;
     } else {
-      pos->second.insert(val);
+      pos->second.insert(label);
     }
   }
   bool search(const vector<float>& feat, unordered_set<int>& output) {
