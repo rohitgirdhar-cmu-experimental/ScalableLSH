@@ -38,7 +38,7 @@ public:
     delete db;
   }
 
-  bool Get(int pos, vector<T>& output) {
+  bool Get(int pos, T& output) {
     output.clear();
     // read from the leveldb
     string value;
@@ -54,7 +54,7 @@ public:
     return true;
   }
 
-  bool Put(int pos, const vector<T>& input) {
+  bool Put(int pos, const T& input) {
     ostringstream oss;
     boost::archive::binary_oarchive oa(oss);
     oa << input;
