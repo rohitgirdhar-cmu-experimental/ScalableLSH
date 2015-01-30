@@ -13,15 +13,13 @@ namespace fs = boost::filesystem;
 class LSHFunc {
   float w;
   int k; // number of bits in a function (length of key)
-  int L; // number of hash tables
   int dim; // dimension of features
   Eigen::MatrixXf A;
   Eigen::MatrixXf b;
   
 public:
-  LSHFunc(int _k, int _L, int _dim) {
+  LSHFunc(int _k, int _dim) {
     k = _k;
-    L = _L;
     dim = _dim;
     genLSHfunc();
   }

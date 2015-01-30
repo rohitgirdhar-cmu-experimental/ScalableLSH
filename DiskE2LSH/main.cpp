@@ -1,6 +1,7 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 #include "storage/DiskVector.hpp"
+#include "Table.hpp"
 #include "LSHFunc.hpp"
 
 using namespace std;
@@ -31,13 +32,15 @@ int main(int argc, char* argv[]) {
   string OUTDIR = vm["datapath"].as<string>();
 
   DiskVector<vector<float>> temp(OUTDIR);
-  LSHFunc L(20, 10, 9216);
+  LSHFunc L(20, 9216);
   vector<float> feat;
   temp.Get(5, feat);
-  vector<int> hash;
-  L.computeHash(feat, hash);
-  for (int i = 0; i < hash.size(); i++) {
-    cout << hash[i] << " ";
+  Table t(20, 9216);
+  t.insert(feat, 1);
+  unordered_set<int> t2;
+  t.search(feat, t2);
+  for (auto it = t2.begin(); it != t2.end(); it++) {
+    cout << *it << " ";
   }
 
   return 0;

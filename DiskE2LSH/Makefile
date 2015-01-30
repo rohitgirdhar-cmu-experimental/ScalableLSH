@@ -5,7 +5,7 @@ INC += -I ~/Software/utils/leveldb/include/ -I ~/Software/utils/boost/include/ -
 
 all: main.bin
 
-%.bin: %.cpp storage/DiskVector.hpp LSHFunc.hpp
+%.bin: %.cpp storage/DiskVector.hpp LSHFunc.hpp Table.hpp
 	$(CXX) \
 		$(CPPFLAGS) \
     $(INC) \
