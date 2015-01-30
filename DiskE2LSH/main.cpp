@@ -34,9 +34,9 @@ int main(int argc, char* argv[]) {
   DiskVector<vector<float>> temp(OUTDIR);
   vector<float> feat;
   
-  LSH l(150, 10, 9216);
+  LSH l(200, 10, 9216);
   time_t timer;
-  for (int i = 0; i < 3000; i++) {
+  for (int i = 0; i < 50000; i++) {
     temp.Get(i, feat);
     l.insert(feat, i);
     if (i % 1000 == 0)

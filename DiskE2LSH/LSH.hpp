@@ -12,8 +12,9 @@ public:
     }
   }
   void insert(const vector<float>& feat, int label) {
-    for (auto it = tables.begin(); it != tables.end(); it++) {
-      it->insert(feat, label);
+    #pragma omp parallel for
+    for (int i = 0; i < tables.size(); i++) {
+      tables[i].insert(feat, label);
     }
   }
   void search(const vector<float>& feat, unordered_set<int>& output) {

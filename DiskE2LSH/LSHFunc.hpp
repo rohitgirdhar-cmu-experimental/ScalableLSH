@@ -39,6 +39,9 @@ public:
   }
 
   void computeHash(const vector<float>& _feat, vector<int>& hash) {
+    if (_feat.size() == 0) {
+      return;
+    }
     hash.clear();
     Eigen::MatrixXf feat = Eigen::VectorXf::Map(&_feat[0], _feat.size());
     Eigen::MatrixXf res = (feat.transpose() * A - b.replicate(feat.cols(), 1)) / w;
