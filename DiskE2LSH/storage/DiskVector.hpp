@@ -38,7 +38,7 @@ public:
     delete db;
   }
 
-  bool Get(int pos, T& output) {
+  bool Get(int pos, T& output) const {
     output.clear();
     // read from the leveldb
     string value;

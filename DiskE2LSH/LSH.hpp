@@ -1,6 +1,8 @@
 #ifndef LSH_HPP
 #define LSH_HPP
 
+#include "Table.hpp"
+
 class LSH {
   vector<Table> tables;
 public:

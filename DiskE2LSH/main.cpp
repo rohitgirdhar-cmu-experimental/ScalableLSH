@@ -1,10 +1,8 @@
 #include <iostream>
 #include <boost/program_options.hpp>
 #include "storage/DiskVector.hpp"
-#include "Table.hpp"
-#include "LSHFunc.hpp"
 #include "LSH.hpp"
-#include <ctime>
+#include "Resorter.hpp"
 
 using namespace std;
 namespace fs = boost::filesystem;
@@ -36,9 +34,9 @@ int main(int argc, char* argv[]) {
   DiskVector<vector<float>> temp(OUTDIR);
   vector<float> feat;
   
-  LSH l(100, 10, 9216);
+  LSH l(150, 10, 9216);
   time_t timer;
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 3000; i++) {
     temp.Get(i, feat);
     l.insert(feat, i);
     if (i % 1000 == 0)
@@ -48,8 +46,9 @@ int main(int argc, char* argv[]) {
   DiskVector<vector<float>> q("storage/marked_feats_normalized");
   q.Get(0, feat);
   l.search(feat, t2);
-  for (auto it = t2.begin(); it != t2.end(); it++) {
-    cout << *it << " ";
+  vector<pair<float, int>> res = Resorter::resort(t2, temp, feat);
+  for (auto it = res.begin(); it != res.end(); it++) {
+    cout << it->first << " " << it->second << endl;
   }
 
   return 0;
