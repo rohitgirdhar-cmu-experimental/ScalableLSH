@@ -25,7 +25,8 @@ public:
     Eigen::MatrixXf cos_scores = qfeat_mat.transpose() * feats_mat.transpose();
 
     vector<pair<float, int>> res;
-    for (auto match = matches.begin(), i = 0; match != matches.end(); match++, i++) {
+    int i = 0;
+    for (auto match = matches.begin(); match != matches.end(); match++, i++) {
       res.push_back(make_pair(cos_scores(i), *match));
     }
     sort(res.begin(), res.end());
