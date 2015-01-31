@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
     vector<float> feat;
     high_resolution_clock::time_point pivot = high_resolution_clock::now();
     for (int i = 0; i < vm["sized"].as<int>(); i++) {
-      tree.Get(i, feat);
+      if (!tree.Get(i, feat)) break;
       l->insert(feat, i);
       if (i % 1000 == 0) {
         high_resolution_clock::time_point pivot2 = high_resolution_clock::now();
