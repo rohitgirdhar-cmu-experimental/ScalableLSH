@@ -8,6 +8,7 @@
 #include "Resorter.hpp"
 
 using namespace std;
+using namespace std::chrono;
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
@@ -57,11 +58,17 @@ int main(int argc, char* argv[]) {
   } else if (vm.count("datapath")) {
     l = new LSH(200, 15, 9216);
     vector<float> feat;
+    high_resolution_clock::time_point pivot = high_resolution_clock::now();
     for (int i = 0; i < vm["sized"].as<int>(); i++) {
       tree.Get(i, feat);
       l->insert(feat, i);
       if (i % 1000 == 0) {
-        cout << "Done for " << i << endl;
+        high_resolution_clock::time_point pivot2 = high_resolution_clock::now();
+        cout << "Done for " << i + 1 
+             << " in " 
+             << duration_cast<seconds>(pivot2 - pivot).count()
+             << "s" <<endl;
+        pivot = pivot2;
       }
     }
   }
@@ -79,8 +86,7 @@ int main(int argc, char* argv[]) {
     vector<float> feat;
     DiskVector<vector<float>> q(vm["querypath"].as<string>());
     for (int i = 0; i < vm["sizeq"].as<int>(); i++) {
-      std::chrono::high_resolution_clock::time_point t1 = 
-        std::chrono::high_resolution_clock::now();
+      high_resolution_clock::time_point t1 = high_resolution_clock::now();
       q.Get(i, feat);
       l->search(feat, temp);
       vector<pair<float, int>> res;
@@ -90,10 +96,8 @@ int main(int argc, char* argv[]) {
         fout << it->second + 1 << endl; 
       }
       fout.close();
-      std::chrono::high_resolution_clock::time_point t2 = 
-        std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
-        (t2 - t1).count();
+      high_resolution_clock::time_point t2 = high_resolution_clock::now();
+      auto duration = duration_cast<milliseconds>(t2 - t1).count();
       cout << "Search done for " << i << " in " << duration << " ms" << endl;
     }
   }
