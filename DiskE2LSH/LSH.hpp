@@ -2,8 +2,10 @@
 #define LSH_HPP
 
 #include "Table.hpp"
+#include <boost/serialization/serialization.hpp>
 
 class LSH {
+  friend class boost::serialization::access;
   vector<Table> tables;
 public:
   LSH(int k, int L, int dim) {
@@ -24,6 +26,10 @@ public:
       it->search(feat, part);
       output.insert(part.begin(), part.end());
     }
+  }
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar & tables; 
   }
 };
 

@@ -1,6 +1,15 @@
 #ifndef LSHFUNC_HPP
 #define LSHFUNC_HPP
 
+#ifndef EIGEN_CONFIG_H_
+#define EIGEN_CONFIG_H_
+
+#include <boost/serialization/array.hpp>
+#define EIGEN_DENSEBASE_PLUGIN "/IUS/homes4/rohytg/work/ScalableLSH/DiskE2LSH/EigenDenseBaseAddons.hpp"
+#include <Eigen/Core>
+#endif // EIGEN_CONFIG_H_
+
+
 #include <Eigen/Dense>
 #include <boost/random.hpp>
 #include <boost/filesystem.hpp>
@@ -23,6 +32,7 @@ public:
     dim = _dim;
     genLSHfunc();
   }
+  LSHFunc() {} // used while serializing
 
   void genLSHfunc() {
     w = 24; // default value
@@ -49,7 +59,15 @@ public:
       hash.push_back((int) floor(res(i)));
     }
   }
-
+  
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar & w;
+    ar & k;
+    ar & dim;
+    ar & A;
+    ar & b;
+  }
 };
 
 #endif
