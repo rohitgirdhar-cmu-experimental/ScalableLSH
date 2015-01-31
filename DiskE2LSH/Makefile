@@ -6,10 +6,5 @@ INC += -I ~/software/leveldb/include/ -I ~/software/boost/include/ -I Eigen_3.2.
 all: main.bin
 
 %.bin: %.cpp storage/DiskVector.hpp LSHFunc.hpp Table.hpp Resorter.hpp Makefile LSH.hpp
-	$(CXX) \
-		$(CPPFLAGS) \
-    $(INC) \
-		$< -o $@ \
-		$(LIBS) \
-		$(LDFLAGS)
+	$(CXX) $(CPPFLAGS) $(INC) $< -o $@ $(LIBS) $(LDFLAGS)
 
