@@ -3,17 +3,24 @@
 
 #include "LSHFunc.hpp"
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <unordered_set>
 #include <boost/serialization/serialization.hpp>
-#include <boost/serialization/map.hpp> 
+#include <boost/serialization/unordered_map.hpp> 
 #include <boost/serialization/vector.hpp> 
-#include <boost/serialization/unordered_set.hpp> 
+#include <boost/serialization/unordered_set.hpp>
+#include <boost/functional/hash.hpp>
+
+struct vectorint_hash {
+  std::size_t operator()(vector<int> const& c) const {
+    return boost::hash_range(c.begin(), c.end());
+  }
+};
 
 class Table {
   friend class boost::serialization::access;
   LSHFunc lshFunc;
-  map<vector<int>, unordered_set<int>> index;
+  unordered_map<vector<int>, unordered_set<int>, vectorint_hash> index;
 public:
   Table(int k, int dim) : lshFunc(k, dim) {}
   Table() {} // used for serializing

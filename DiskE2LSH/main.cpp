@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include <boost/program_options.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -78,6 +79,8 @@ int main(int argc, char* argv[]) {
     vector<float> feat;
     DiskVector<vector<float>> q(vm["querypath"].as<string>());
     for (int i = 0; i < vm["sizeq"].as<int>(); i++) {
+      std::chrono::high_resolution_clock::time_point t1 = 
+        std::chrono::high_resolution_clock::now();
       q.Get(i, feat);
       l->search(feat, temp);
       vector<pair<float, int>> res = Resorter::resort(temp, tree, feat);
@@ -86,6 +89,11 @@ int main(int argc, char* argv[]) {
         fout << it->second + 1 << endl; 
       }
       fout.close();
+      std::chrono::high_resolution_clock::time_point t2 = 
+        std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
+        (t2 - t1).count();
+      cout << "Search done for " << i << " in " << duration << " ms" << endl;
     }
   }
 
