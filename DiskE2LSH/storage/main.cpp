@@ -6,8 +6,9 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
-//#define FPATH "/home/rgirdhar/Work/Projects/001_DetectionRetrieval/BgMatchesObjDet/tempdata/selsearch_feats_all_normalized.txt"
-#define FPATH "/home/rgirdhar/Work/Projects/001_DetectionRetrieval/BgMatchesObjDet/tempdata/marked_feats_all.txt"
+#define FPATH "/IUS/vmr105/rohytg/data/selsearch_feats_all_normalized.txt"
+//#define FPATH "marked_feats_all.txt"
+//#define FPATH "/home/rgirdhar/Work/Projects/001_DetectionRetrieval/BgMatchesObjDet/tempdata/marked_feats_all.txt"
 
 void normalize(vector<float>& feat) {
   float norm = 0;
@@ -22,7 +23,7 @@ void normalize(vector<float>& feat) {
 }
 
 void readAndIndex(fs::path fpath) {
-  DiskVector<vector<float>> d("marked_feats_normalized");
+  DiskVector<vector<float>> d("selsearch_feats_normalized2");
   ifstream ifs(fpath.string().c_str(), ios::in);
   string line;
   float el;

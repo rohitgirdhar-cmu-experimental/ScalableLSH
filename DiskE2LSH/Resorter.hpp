@@ -7,6 +7,14 @@
 
 class Resorter {
 public:
+  float static computeDot(vector<float> a, vector<float> b) {
+    float ans = 0;
+    for (auto it = a.begin(), it2 = b.begin(); 
+        it != a.end() && it2 != b.end(); it++, it2++) {
+      ans += (*it) * (*it2);
+    }
+    return ans;
+  }
   vector<pair<float, int>> static resort(const unordered_set<int>& matches, 
       const DiskVector<vector<float>>& feats,
       const vector<float>& qfeat) {
@@ -30,6 +38,7 @@ public:
       res.push_back(make_pair(cos_scores(i), *match));
     }
     sort(res.begin(), res.end());
+    reverse(res.begin(), res.end());
     return res;
   }
 };

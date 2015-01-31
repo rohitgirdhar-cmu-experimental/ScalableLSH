@@ -6,12 +6,10 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
-#define FPATH "/home/rgirdhar/Work/Projects/001_DetectionRetrieval/BgMatchesObjDet/tempdata/selsearch_feats_all_normalized.txt"
-
-void readAndPrint(fs::path fpath) {
+void readAndPrint() {
   DiskVector<vector<float>> d("selsearch_feats_normalized");
   vector<float> temp;
-  d.Get(10, temp);
+  d.Get(0, temp);
   cout << temp.size();
   for (int i = 0; i < temp.size(); i++) {
     cout << temp[i] << " ";
@@ -19,7 +17,7 @@ void readAndPrint(fs::path fpath) {
 }
 
 int main() {
-  readAndPrint(FPATH);
+  readAndPrint();
   return 0;
 }
 
