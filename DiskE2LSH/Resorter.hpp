@@ -15,9 +15,10 @@ public:
     }
     return ans;
   }
-  vector<pair<float, int>> static resort(const unordered_set<int>& matches, 
+  void static resort(const unordered_set<int>& matches, 
       const DiskVector<vector<float>>& feats,
-      const vector<float>& qfeat) {
+      const vector<float>& qfeat,
+      vector<pair<float, int>>& res) {
     Eigen::MatrixXf qfeat_mat = Eigen::VectorXf::Map(&qfeat[0], qfeat.size());
     vector<vector<float>> feats_vec;
     for (auto match = matches.begin(); 
@@ -32,14 +33,13 @@ public:
     }
     Eigen::MatrixXf cos_scores = qfeat_mat.transpose() * feats_mat.transpose();
 
-    vector<pair<float, int>> res;
+    res.clear();
     int i = 0;
     for (auto match = matches.begin(); match != matches.end(); match++, i++) {
       res.push_back(make_pair(cos_scores(i), *match));
     }
     sort(res.begin(), res.end());
     reverse(res.begin(), res.end());
-    return res;
   }
 };
 

@@ -83,7 +83,8 @@ int main(int argc, char* argv[]) {
         std::chrono::high_resolution_clock::now();
       q.Get(i, feat);
       l->search(feat, temp);
-      vector<pair<float, int>> res = Resorter::resort(temp, tree, feat);
+      vector<pair<float, int>> res;
+      Resorter::resort(temp, tree, feat, res);
       ofstream fout(string(RESDIR) + "/" + to_string(i + 1) + ".txt");
       for (auto it = res.begin(); it != res.end(); it++) {
         fout << it->second + 1 << endl; 
