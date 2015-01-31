@@ -91,7 +91,9 @@ int main(int argc, char* argv[]) {
       l->search(feat, temp);
       vector<pair<float, int>> res;
       Resorter::resort(temp, tree, feat, res);
-      ofstream fout(string(RESDIR) + "/" + to_string(i + 1) + ".txt");
+      // static_cast so that it compiles with older g++ (4.4.x)
+      ofstream fout(string(RESDIR) + "/" + 
+          to_string(static_cast<long long>(i + 1)) + ".txt");
       for (auto it = res.begin(); it != res.end(); it++) {
         fout << it->second + 1 << endl; 
       }

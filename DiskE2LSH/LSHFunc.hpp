@@ -5,7 +5,8 @@
 #define EIGEN_CONFIG_H_
 
 #include <boost/serialization/array.hpp>
-#define EIGEN_DENSEBASE_PLUGIN "/IUS/homes4/rohytg/work/ScalableLSH/DiskE2LSH/EigenDenseBaseAddons.hpp"
+// w.r.t Eigen_3.2.4/Eigen/Core
+#define EIGEN_DENSEBASE_PLUGIN "../../../../EigenDenseBaseAddons.hpp"
 #include <Eigen/Core>
 #endif // EIGEN_CONFIG_H_
 
