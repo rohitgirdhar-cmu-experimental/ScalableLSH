@@ -23,7 +23,7 @@ def main():
   f = open(featcountfile)
   perImg = [int(s) for s in f.read().splitlines()]
   f.close()
-  for i in range(1, 5 + 1):
+  for i in range(1, 237 + 1):
     f = open(inpdir + str(i) + '.txt')
     imgs = []
     idxs = []

@@ -1,7 +1,7 @@
 # Generate visualization for the top elements from getTop
 
 import sys, os
-sys.path.append("/opt/ros/groovy/lib/python2.7/dist-packages/")
+sys.path.append("/home/xiaolonw/opencv/lib/python2.6/site-packages")
 import cv2
 import numpy as np
 
@@ -29,6 +29,7 @@ def main():
         topimgs, bboxes = readTopList(os.path.join(topsdir, str(i) + ".txt"))
         j = 0
         hitornot = []
+        topimgs = topimgs[0 : 40]
         for topimg in topimgs:
             J = cv2.imread(imgsdir + lst[topimg - 1])
             tcls = getClass(lst[topimg - 1])
