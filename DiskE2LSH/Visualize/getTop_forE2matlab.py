@@ -18,7 +18,7 @@ def main():
         tops = np.array(tops)
         bboxes = readBboxes(os.path.join(inputdir, str(i) + "_posn.txt"), boxesdir, tops)
 
-        done = np.zeros(N) # don't print more than 1 of one image
+        done = np.zeros(N + 1) # don't print more than 1 of one image
         fout = open(outputdir + str(i) + ".txt", 'w')
         for j in range(np.shape(bboxes)[0]):
             if not done[tops[j]]:
