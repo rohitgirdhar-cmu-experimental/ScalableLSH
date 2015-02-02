@@ -1,6 +1,9 @@
 Prerequisites
 -------------
 - Get [LevelDB](https://github.com/google/leveldb). Compile and install.
+```bash
+$ cd /path/to/levedb/; make -j8
+```
 - Get [Boost](http://www.boost.org/). Install using
 ```bash
 $ ./bootstrap --with-libraries=filesystem,program_options,system,serialization --exec-prefix=/path/to/install/dir
