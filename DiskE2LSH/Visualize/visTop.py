@@ -8,6 +8,7 @@ import numpy as np
 imgsdir = "../dataset/PeopleAtLandmarks/corpus/"
 topsdir = '../tempdata/tops/'
 outimgspath = "../tempdata/tops_vis/"
+genImgs = True
 
 def main():
     with open("../dataset/PeopleAtLandmarks/ImgsList.txt") as f:
@@ -17,27 +18,29 @@ def main():
         if not os.path.exists(out_dpath):
             os.makedirs(out_dpath)
 
-        I = cv2.imread(imgsdir + lst[i - 1])
         qcls = getClass(lst[i - 1])
-        with open("../tempdata/marked_boxes/" + str(i) + ".txt") as fid:
-            box = fid.readline().strip().split(',')
-        qbox = [int(float(el)) for el in box]
-        cv2.rectangle(I, (qbox[1], qbox[0]), (qbox[3], qbox[2]), (0,255,0), 3)
-        I = cv2.resize(I, (256, np.shape(I)[0] * 256 / np.shape(I)[1]))
-        cv2.imwrite(out_dpath + "q.jpg", I)
+        if genImgs:
+          I = cv2.imread(imgsdir + lst[i - 1])
+          with open("../tempdata/marked_boxes/" + str(i) + ".txt") as fid:
+              box = fid.readline().strip().split(',')
+          qbox = [int(float(el)) for el in box]
+          cv2.rectangle(I, (qbox[1], qbox[0]), (qbox[3], qbox[2]), (0,255,0), 3)
+          I = cv2.resize(I, (256, np.shape(I)[0] * 256 / np.shape(I)[1]))
+          cv2.imwrite(out_dpath + "q.jpg", I)
 
         topimgs, bboxes = readTopList(os.path.join(topsdir, str(i) + ".txt"))
         j = 0
         hitornot = []
         topimgs = topimgs[0 : 40]
         for topimg in topimgs:
-            J = cv2.imread(imgsdir + lst[topimg - 1])
             tcls = getClass(lst[topimg - 1])
-            # bbox are in sel search format 
-            cv2.rectangle(J, (int(bboxes[j][1]), int(bboxes[j][0])), 
-                    (int(bboxes[j][3]), int(bboxes[j][2])), (0,0,255), 3)
-            J = cv2.resize(J, (256, np.shape(J)[0] * 256 / np.shape(J)[1]))
-            cv2.imwrite(out_dpath + str(j) + ".jpg", J)
+            if genImgs:
+              J = cv2.imread(imgsdir + lst[topimg - 1])
+              # bbox are in sel search format 
+              cv2.rectangle(J, (int(bboxes[j][1]), int(bboxes[j][0])), 
+                      (int(bboxes[j][3]), int(bboxes[j][2])), (0,0,255), 3)
+              J = cv2.resize(J, (256, np.shape(J)[0] * 256 / np.shape(J)[1]))
+              cv2.imwrite(out_dpath + str(j) + ".jpg", J)
 
             if qcls == tcls:
                 hitornot.append(1)
