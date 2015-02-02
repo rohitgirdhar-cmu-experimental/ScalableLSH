@@ -6,9 +6,9 @@
 using namespace std;
 namespace fs = boost::filesystem;
 
-#define FPATH "/IUS/vmr105/rohytg/data/selsearch_feats_all_normalized.txt"
-//#define FPATH "marked_feats_all.txt"
-//#define FPATH "/home/rgirdhar/Work/Projects/001_DetectionRetrieval/BgMatchesObjDet/tempdata/marked_feats_all.txt"
+#define FPATH "/exports/cyclops/work/003_Backpage/dataset/backpage/features/structured/"
+#define IMGSLST "/exports/cyclops/work/003_Backpage/dataset/backpage/TrainSet.txt"
+#define OUTDIR "nevada_feat_normed_stor"
 
 void normalize(vector<float>& feat) {
   float norm = 0;
@@ -22,14 +22,22 @@ void normalize(vector<float>& feat) {
 
 }
 
-void readAndIndex(fs::path fpath) {
-  DiskVector<vector<float>> d("selsearch_feats_normalized2");
-  ifstream ifs(fpath.string().c_str(), ios::in);
+void readAndIndex(fs::path fpath, fs::path imgsLst) {
+  DiskVector<vector<float>> d(OUTDIR);
+  ifstream ifs(imgsLst.string(), ios::in);
   string line;
   float el;
   int i = 0;
   while (getline(ifs, line)) {
+    fs::path featpath = fpath / fs::change_extension(fs::path(line), fs::path(".txt"));
     vector<float> feat;
+    ifstream ifs2(featpath.string());
+    if (!ifs2.is_open()) {
+      cerr << "Unable to open " << featpath.string() << ". Exitting.." << endl;
+      return;
+    }
+    string line;
+    getline(ifs2, line);
     istringstream iss(line);
     while (iss >> el) {
       feat.push_back(el);
@@ -37,12 +45,14 @@ void readAndIndex(fs::path fpath) {
     normalize(feat);
     d.Put(i, feat);
     i++;
-    cout << "done for " << i << endl;
+    if (i % 100 == 0) {
+      cout << "done for " << i << endl;
+    }
   }
 }
 
 int main() {
-  readAndIndex(FPATH);
+  readAndIndex(fs::path(FPATH), fs::path(IMGSLST));
   return 0;
 }
 
