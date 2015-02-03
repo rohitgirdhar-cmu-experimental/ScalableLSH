@@ -47,7 +47,8 @@ int main(int argc, char* argv[]) {
   }
 
   LSH *l;
-  DiskVector<vector<float>> tree(vm["datapath"].as<string>());
+  DiskVector<vector<float>> *tree =
+      new DiskVector<vector<float>>(vm["datapath"].as<string>());
   if (vm.count("load")) {
     cout << "Loading model from " << vm["load"].as<string>() << "...";
     ifstream ifs(vm["load"].as<string>(), ios::binary);
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]) {
     vector<float> feat;
     high_resolution_clock::time_point pivot = high_resolution_clock::now();
     for (int i = 0; i < vm["sized"].as<int>(); i++) {
-      if (!tree.Get(i, feat)) break;
+      if (!tree->Get(i, feat)) break;
       l->insert(feat, i);
       if (i % 1000 == 0) {
         high_resolution_clock::time_point pivot2 = high_resolution_clock::now();
@@ -82,15 +83,21 @@ int main(int argc, char* argv[]) {
   }
 
   if (vm.count("querypath")) {
+    DiskVector<vector<float>> *q;
+    if (vm["querypath"].as<string>().compare(vm["datapath"].as<string>()) == 0) {
+      q = tree;
+    } else {
+      q = new DiskVector<vector<float>>(vm["querypath"].as<string>());
+    }
     unordered_set<int> temp;
     vector<float> feat;
-    DiskVector<vector<float>> q(vm["querypath"].as<string>());
+    milliseconds total(0);
     for (int i = 0; i < vm["sizeq"].as<int>(); i++) {
       high_resolution_clock::time_point t1 = high_resolution_clock::now();
-      q.Get(i, feat);
+      q->Get(i, feat);
       l->search(feat, temp);
       vector<pair<float, int>> res;
-      Resorter::resort(temp, tree, feat, res);
+      Resorter::resort(temp, *tree, feat, res);
       // static_cast so that it compiles with older g++ (4.4.x)
       ofstream fout(string(RESDIR) + "/" + 
           to_string(static_cast<long long>(i + 1)) + ".txt");
@@ -99,11 +106,17 @@ int main(int argc, char* argv[]) {
       }
       fout.close();
       high_resolution_clock::time_point t2 = high_resolution_clock::now();
-      auto duration = duration_cast<milliseconds>(t2 - t1).count();
-      cout << "Search done for " << i << " in " << duration << " ms" << endl;
+      milliseconds duration = duration_cast<milliseconds>(t2 - t1);
+      total += duration;
+      cout << "Search done for " << i << " in " 
+           << duration.count() << " ms " 
+           << "(average: " << total.count() * 1.0f / (i + 1) << ")" << endl;
     }
+    delete q;
+    q = NULL;
   }
-
+  if (tree) delete tree;
+  
   return 0;
 }
 

@@ -36,10 +36,7 @@ void readAndIndex(fs::path fpath, fs::path imgsLst) {
       cerr << "Unable to open " << featpath.string() << ". Exitting.." << endl;
       return;
     }
-    string line;
-    getline(ifs2, line);
-    istringstream iss(line);
-    while (iss >> el) {
+    while (ifs2 >> el) {
       feat.push_back(el);
     }
     normalize(feat);
