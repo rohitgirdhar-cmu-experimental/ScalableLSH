@@ -28,9 +28,7 @@ class LSHFunc {
   Eigen::MatrixXf b;
   
 public:
-  LSHFunc(int _k, int _dim) {
-    k = _k;
-    dim = _dim;
+  LSHFunc(int _k, int _dim): k(_k), dim(_dim) {
     genLSHfunc();
   }
   LSHFunc() {} // used while serializing
@@ -55,6 +53,7 @@ public:
     }
     hash.clear();
     Eigen::MatrixXf feat = Eigen::VectorXf::Map(&_feat[0], _feat.size());
+    feat = feat / feat.norm(); // normalize the feature
     Eigen::MatrixXf res = (feat.transpose() * A - b.replicate(feat.cols(), 1)) / w;
     for (int i = 0; i < res.size(); i++) {
       hash.push_back((int) floor(res(i)));

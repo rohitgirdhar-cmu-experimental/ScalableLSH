@@ -2,6 +2,7 @@
 #define RESORTER_HPP
 
 #include "storage/DiskVector.hpp"
+#include "utils.hpp"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <cmath>
@@ -41,6 +42,7 @@ public:
         // TODO: Avoid this, use pre-alloc of memory
         vector<float> temp;
         feats.Get(*match, temp);
+        L2Normalize(temp);
         feats_vec.push_back(temp);
         // for output
         res_batch.push_back(make_pair(0.0f, *match));
