@@ -110,6 +110,14 @@ int main(int argc, char* argv[]) {
       ofstream fout((fs::path(vm["outdir"].as<string>()) /
           fs::path(to_string(static_cast<long long>(i + 1)) + ".txt")).string());
       for (int j = 0; j < featcounts[i]; j++) {
+
+        // randomly keep only 1000 of the windows (since can't do for all of them!)
+        float perc =  1000.0f / featcounts[i];
+        if ((double) rand() / RAND_MAX > perc) {
+          fout << endl; 
+          continue;
+        }
+
         high_resolution_clock::time_point t1 = high_resolution_clock::now();
         int idx = (qlist[i] - 1) * MAXFEATPERIMG + j;
         featstor->Get(idx, feat);
