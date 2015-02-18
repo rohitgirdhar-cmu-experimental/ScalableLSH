@@ -16,6 +16,7 @@
 #include <boost/filesystem.hpp>
 #include <cmath>
 #include <functional>
+#include "config.hpp"
 
 using namespace std;
 namespace fs = boost::filesystem;
@@ -47,13 +48,15 @@ public:
     }
   }
 
-  void computeHash(const vector<float>& _feat, vector<int>& hash) {
+  void computeHash(const vector<float>& _feat, vector<int>& hash) const {
     if (_feat.size() == 0) {
       return;
     }
     hash.clear();
     Eigen::MatrixXf feat = Eigen::VectorXf::Map(&_feat[0], _feat.size());
-    feat = feat / feat.norm(); // normalize the feature
+    #if NORMALIZE_FEATS == 1
+      feat = feat / feat.norm(); // normalize the feature
+    #endif
     Eigen::MatrixXf res = (feat.transpose() * A - b.replicate(feat.cols(), 1)) / w;
     for (int i = 0; i < res.size(); i++) {
       hash.push_back((int) floor(res(i)));

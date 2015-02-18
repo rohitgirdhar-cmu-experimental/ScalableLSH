@@ -3,6 +3,7 @@
 
 #include "storage/DiskVector.hpp"
 #include "utils.hpp"
+#include "config.hpp"
 #include <Eigen/Dense>
 #include <algorithm>
 #include <cmath>
@@ -32,7 +33,9 @@ public:
       cerr << "0 matches input to resorter..";
       return;
     }
-    L2Normalize(qfeat);
+    #if NORMALIZE_FEATS == 1
+      L2Normalize(qfeat); // no longer required as storing normalized
+    #endif
     Eigen::MatrixXf qfeat_mat = Eigen::VectorXf::Map(&qfeat[0], qfeat.size());
     
     // Batch process the scoring
@@ -51,7 +54,9 @@ public:
         // TODO: Avoid this, use pre-alloc of memory
         vector<float> temp;
         feats->Get(*match, temp);
-        L2Normalize(temp);
+        #if NORMALIZE_FEATS == 1
+          L2Normalize(temp);
+        #endif
         feats_vec.push_back(temp);
         // for output
         res_batch.push_back(make_pair(0.0f, *match));
@@ -86,7 +91,10 @@ public:
       cerr << "0 matches input to resorter..";
       return;
     }
-    L2Normalize(qfeat);
+
+    #if NORMALIZE_FEATS == 1
+      L2Normalize(qfeat);
+    #endif
     Eigen::MatrixXf qfeat_mat = Eigen::VectorXf::Map(&qfeat[0], qfeat.size());
     
     int nMatches = matches.size();
@@ -96,7 +104,9 @@ public:
     for (int i = 0; i < nMatches; i++) {
       vector<float> temp;
       feats->Get(matches_vec[i], temp);
-      L2Normalize(temp);
+      #if NORMALIZE_FEATS == 1
+        L2Normalize(temp);
+      #endif
       Eigen::MatrixXf match_mat = Eigen::VectorXf::Map(&temp[0], temp.size());
       Eigen::MatrixXf cos = qfeat_mat.transpose() * match_mat;
       scores[i] = cos(0); 

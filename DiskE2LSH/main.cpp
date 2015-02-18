@@ -102,44 +102,52 @@ int main(int argc, char* argv[]) {
   if (vm.count("qimgslist") && vm.count("outdir")) {
     vector<int> qlist;
     readList(vm["qimgslist"].as<string>(), qlist);
-    vector<float> feat;
     auto featstor = shared_ptr<DiskVector<vector<float>>>(
         new DiskVector<vector<float>>(vm["datapath"].as<string>()));
+
     for (int i = 0; i < qlist.size(); i++) {
       // by default, search on all features in the image. TODO: fix this
-      ofstream fout((fs::path(vm["outdir"].as<string>()) /
-          fs::path(to_string(static_cast<long long>(i + 1)) + ".txt")).string());
-      for (int j = 0; j < featcounts[i]; j++) {
+      fs::path fpath = fs::path(vm["outdir"].as<string>()) /
+          fs::path(to_string(static_cast<long long>(qlist[i])) + ".txt");
+      if (fs::exists(fpath)) {
+        cerr << "Skipping " << fpath << "..." << endl;
+        continue;
+      }
 
+      vector<vector<pair<float, int>>> allres{featcounts[i]};
+      #pragma omp parallel for num_threads(8) shared(featstor)
+      for (int j = 0; j < featcounts[i]; j++) {
         // randomly keep only 1000 of the windows (since can't do for all of them!)
         float perc =  1000.0f / featcounts[i];
+        vector<pair<float,int>> res;
         if ((double) rand() / RAND_MAX > perc) {
-          fout << endl; 
+          allres[j] = res;
           continue;
         }
 
         high_resolution_clock::time_point t1 = high_resolution_clock::now();
         int idx = (qlist[i] - 1) * MAXFEATPERIMG + j;
+        vector<float> feat;
         featstor->Get(idx, feat);
-
+        
         unordered_set<int> temp;
         l->search(feat, temp);
-        vector<pair<float, int>> res;
         Resorter::resort_multicore(temp, featstor, feat, res);
-        int pos = 0;
-        { // critical section
-          for (auto it = res.begin(); it != res.end(); it++, pos++) {
-            fout << it->second + 1 << ":" << it->first << " ";
-            if (pos > vm["topk"].as<int>()) break;
-          }
-          fout << endl;
-          fout.flush();
-        }
+        allres[j] = vector<pair<float, int>>(res.begin(), 
+            res.begin() + vm["topk"].as<int>());
         high_resolution_clock::time_point t2 = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(t2 - t1).count();
-        cout << "Search done for " << i << ":" << j << " in " << duration 
+        cout << "Search done for " << qlist[i] << ":" << j << " in " << duration 
              << " ms (re-ranked: " << temp.size() << ")" << endl;
         cout.flush();
+      }
+      ofstream fout(fpath.string());
+      for (auto res = allres.begin(); res != allres.end(); res++) {
+        int pos = 0;
+        for (auto it = res->begin(); it != res->end(); it++) {
+          fout << it->second + 1 << ":" << it->first << " ";
+        }
+        fout << endl;
       }
       fout.close();
     }

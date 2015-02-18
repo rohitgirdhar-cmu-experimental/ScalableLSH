@@ -37,7 +37,7 @@ public:
       pos->second.insert(label);
     }
   }
-  bool search(const vector<float>& feat, unordered_set<int>& output) {
+  bool search(const vector<float>& feat, unordered_set<int>& output) const {
     vector<int> hash;
     lshFunc.computeHash(feat, hash);
     auto pos = index.find(hash);
