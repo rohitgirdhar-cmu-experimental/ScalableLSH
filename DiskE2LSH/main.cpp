@@ -116,12 +116,12 @@ int main(int argc, char* argv[]) {
       }
 
       vector<vector<pair<float, int>>> allres{featcounts[i]};
-//      #pragma omp parallel for // this didn't really help
+      #pragma omp parallel for // this didn't really help
       for (int j = 0; j < featcounts[i]; j++) {
-        // randomly keep only 1000 of the windows (since can't do for all of them!)
-        float perc =  1000.0f / featcounts[i];
         vector<pair<float,int>> res;
         #if defined(RAND_SAMPLE) && RAND_SAMPLE == 1
+          // randomly keep only 1000 of the windows (since can't do for all of them!)
+          float perc =  1000.0f / featcounts[i];
           if ((double) rand() / RAND_MAX > perc) {
             allres[j] = res;
             continue;
@@ -131,7 +131,11 @@ int main(int argc, char* argv[]) {
         high_resolution_clock::time_point t1 = high_resolution_clock::now();
         int idx = (qlist[i] - 1) * MAXFEATPERIMG + j;
         vector<float> feat;
-        featstor->Get(idx, feat);
+        if (!featstor->Get(idx, feat)) {
+          cerr << "Ignoring..." << endl;
+          allres[j] = res;
+          continue;
+        }
         
         unordered_set<int> temp;
         l->search(feat, temp);
