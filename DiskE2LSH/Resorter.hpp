@@ -100,7 +100,7 @@ public:
     int nMatches = matches.size();
     vector<float> scores(nMatches, 0);
 
-    #pragma omp parallel for schedule(dynamic, 1)
+    #pragma omp parallel for shared(scores) schedule(dynamic, 1)
     for (int i = 0; i < nMatches; i++) {
       vector<float> temp;
       feats->Get(matches_vec[i], temp);

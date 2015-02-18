@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
       }
 
       vector<vector<pair<float, int>>> allres{featcounts[i]};
-      #pragma omp parallel for num_threads(8) shared(featstor)
+//      #pragma omp parallel for // this didn't really help
       for (int j = 0; j < featcounts[i]; j++) {
         // randomly keep only 1000 of the windows (since can't do for all of them!)
         float perc =  1000.0f / featcounts[i];
