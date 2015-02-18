@@ -8,6 +8,7 @@
 #include "Resorter.hpp"
 #include "utils.hpp"
 #include "lock.hpp"
+#include "config.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -120,10 +121,12 @@ int main(int argc, char* argv[]) {
         // randomly keep only 1000 of the windows (since can't do for all of them!)
         float perc =  1000.0f / featcounts[i];
         vector<pair<float,int>> res;
-        if ((double) rand() / RAND_MAX > perc) {
-          allres[j] = res;
-          continue;
-        }
+        #if defined(RAND_SAMPLE) && RAND_SAMPLE == 1
+          if ((double) rand() / RAND_MAX > perc) {
+            allres[j] = res;
+            continue;
+          }
+        #endif
 
         high_resolution_clock::time_point t1 = high_resolution_clock::now();
         int idx = (qlist[i] - 1) * MAXFEATPERIMG + j;
