@@ -82,7 +82,7 @@ public:
    * Multicore reranking
    */
   void static resort_multicore(const unordered_set<int>& matches, 
-      const shared_ptr<DiskVector<vector<float>>>& feats,
+      const shared_ptr<DiskVectorLMDB<vector<float>>>& feats,
       vector<float>& qfeat,
       vector<pair<float, int>>& res) {
     res.clear();

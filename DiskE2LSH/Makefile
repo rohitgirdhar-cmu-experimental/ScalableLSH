@@ -1,5 +1,5 @@
-CPPFLAGS += -std=c++0x -fopenmp -g -O2
-LDFLAGS += -lleveldb -lboost_serialization -lboost_system -lboost_program_options -lboost_filesystem
+CPPFLAGS += -std=c++0x -fopenmp -g -O2 -llmdb
+LDFLAGS += -lleveldb -lboost_serialization -lboost_system -lboost_program_options -lboost_filesystem -lglog
 LIBS += -L ~/Software/utils/leveldb/ -L /home/rgirdhar/data/Software/cpp/boost_1_57_0/stage/lib/
 INC += -I ~/Software/utils/leveldb/include/ -I /home/rgirdhar/data/Software/cpp/boost_1_57_0/ -I Eigen/
 

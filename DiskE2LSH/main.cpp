@@ -3,7 +3,7 @@
 #include <boost/program_options.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
-#include "storage/DiskVector.hpp"
+#include "storage/DiskVectorLMDB.hpp"
 #include "LSH.hpp"
 #include "Resorter.hpp"
 #include "utils.hpp"
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
     vector<float> feat;
     
     high_resolution_clock::time_point pivot = high_resolution_clock::now();
-    DiskVector<vector<float>> tree(vm["datapath"].as<string>());
+    DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>());
     for (int i = 0; i < imgslst.size(); i++) {
       for (int j = 0; j < featcounts[i]; j++) {
         int idx = i * MAXFEATPERIMG + j;
@@ -103,21 +103,21 @@ int main(int argc, char* argv[]) {
   if (vm.count("qimgslist") && vm.count("outdir")) {
     vector<int> qlist;
     readList(vm["qimgslist"].as<string>(), qlist);
-    auto featstor = shared_ptr<DiskVector<vector<float>>>(
-        new DiskVector<vector<float>>(vm["datapath"].as<string>()));
+    auto featstor = shared_ptr<DiskVectorLMDB<vector<float>>>(
+        new DiskVectorLMDB<vector<float>>(vm["datapath"].as<string>(), 1));
 
     for (int i = 0; i < qlist.size(); i++) {
       // by default, search on all features in the image. TODO: fix this
       fs::path fpath = fs::path(vm["outdir"].as<string>()) /
           fs::path(to_string(static_cast<long long>(qlist[i])) + ".txt");
-      if (fs::exists(fpath)) {
+      if (!lock(fpath)) {
         cerr << "Skipping " << fpath << "..." << endl;
         continue;
       }
 
-      vector<vector<pair<float, int>>> allres{featcounts[i]};
-      #pragma omp parallel for // this didn't really help
-      for (int j = 0; j < featcounts[i]; j++) {
+      vector<vector<pair<float, int>>> allres{featcounts[qlist[i] - 1]};
+    //  #pragma omp parallel for // this didn't really help
+      for (int j = 0; j < featcounts[qlist[i] - 1]; j++) {
         vector<pair<float,int>> res;
         #if defined(RAND_SAMPLE) && RAND_SAMPLE == 1
           // randomly keep only 1000 of the windows (since can't do for all of them!)
@@ -157,6 +157,7 @@ int main(int argc, char* argv[]) {
         fout << endl;
       }
       fout.close();
+      unlock(fpath);
     }
   }
 
