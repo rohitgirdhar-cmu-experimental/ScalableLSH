@@ -69,11 +69,11 @@ int main(int argc, char* argv[]) {
     ia >> *l;
     cout << "done." << endl;
   } else if (vm.count("datapath")) {
-    l = new LSH(225, 15, 9216);
+    l = new LSH(250, 15, 9216);
     vector<float> feat;
     
     high_resolution_clock::time_point pivot = high_resolution_clock::now();
-    DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>());
+    DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1);
     for (int i = 0; i < imgslst.size(); i++) {
       for (int j = 0; j < featcounts[i]; j++) {
         int idx = i * MAXFEATPERIMG + j;
