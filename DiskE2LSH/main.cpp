@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
         new DiskVectorLMDB<vector<float>>(vm["datapath"].as<string>(), 1));
 
     for (int i = 0; i < qlist.size(); i++) {
-      // by default, search on all features in the image. TODO: fix this
+      // by default, search on all features in the image.
       fs::path fpath = fs::path(vm["outdir"].as<string>()) /
           fs::path(to_string(static_cast<long long>(qlist[i])) + ".txt");
       if (!lock(fpath)) {
@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
         l->search(feat, temp);
         Resorter::resort_multicore(temp, featstor, feat, res);
         allres[j] = vector<pair<float, int>>(res.begin(), 
-            res.begin() + vm["topk"].as<int>());
+            min(res.begin() + vm["topk"].as<int>(), res.end()));
         high_resolution_clock::time_point t2 = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(t2 - t1).count();
         cout << "Search done for " << qlist[i] << ":" << j << " in " << duration 
