@@ -38,6 +38,8 @@ int main(int argc, char* argv[]) {
      "Path to load the hash table from")
     ("topk,k", po::value<int>()->default_value(30),
      "Top-K elements to output after search")
+    ("nbits,b", po::value<int>()->default_value(250),
+     "Number of bits in the representation")
     ;
 
   po::variables_map vm;
@@ -72,7 +74,7 @@ int main(int argc, char* argv[]) {
     ia >> *l;
     cout << "done." << endl;
   } else if (vm.count("datapath")) {
-    l = new LSH(250, 15, 9216);
+    l = new LSH(vm["nbits"].as<int>(), 15, 9216);
     vector<float> feat;
     
     high_resolution_clock::time_point pivot = high_resolution_clock::now();
