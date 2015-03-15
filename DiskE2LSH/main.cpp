@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
      "Path to leveldb where the data is stored")
     ("dimgslist,n", po::value<string>()->required(),
      "File with list of all images")
-    ("featcount,c", po::value<string>()->required(),
+    ("featcount,c", po::value<string>()->default_value(""),
      "File with list of number of features in each image")
     ("outdir,o", po::value<string>(),
      "Output directory to store output matches")
@@ -56,8 +56,11 @@ int main(int argc, char* argv[]) {
   // read the list of images to hash
   vector<fs::path> imgslst;
   readList(vm["dimgslist"].as<string>(), imgslst);
-  vector<int> featcounts;
-  readList(vm["featcount"].as<string>(), featcounts);
+  vector<int> featcounts(imgslst.size(), 1); // default: 1 feat/image
+  if (vm["featcount"].as<string>().length() > 0) {
+    featcounts.clear();
+    readList(vm["featcount"].as<string>(), featcounts);
+  }
 
   LSH *l;
   if (vm.count("load")) {
