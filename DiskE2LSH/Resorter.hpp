@@ -103,7 +103,10 @@ public:
     #pragma omp parallel for shared(scores) schedule(dynamic, 1)
     for (int i = 0; i < nMatches; i++) {
       vector<float> temp;
-      feats->Get(matches_vec[i], temp);
+      if (!feats->Get(matches_vec[i], temp)) {
+        scores[i] = 0;
+        continue;
+      }
       #if NORMALIZE_FEATS == 1
         L2Normalize(temp);
       #endif

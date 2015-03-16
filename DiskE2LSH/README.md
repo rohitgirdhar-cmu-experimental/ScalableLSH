@@ -32,3 +32,9 @@ search would be:
 ```bash
 $ ./main.bin -d storage/selsearch_feats_normalized3 -n 641581 -q storage/marked_feats_normalized/ -m 237 -s full.model
 ```
+
+Notes
+-----
+- Ranking ~3M features on HDD with LMDB index takes ~20sec.
+- The feature index is `imid * 10K + featid`. imid and featid here are 0 indexed. This feature index is then incremented by 1 while storing
+

@@ -15,8 +15,6 @@ using namespace std::chrono;
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
-#define MAXFEATPERIMG 10000
-
 int main(int argc, char* argv[]) {
   
   po::options_description desc("Allowed options");
@@ -40,6 +38,8 @@ int main(int argc, char* argv[]) {
      "Top-K elements to output after search")
     ("nbits,b", po::value<int>()->default_value(250),
      "Number of bits in the representation")
+    ("bruteforce,z", po::bool_switch()->default_value(false),
+     "Use brute force search over all the features. (Use with caution)")
     ;
 
   po::variables_map vm;
@@ -63,9 +63,18 @@ int main(int argc, char* argv[]) {
     featcounts.clear();
     readList(vm["featcount"].as<string>(), featcounts);
   }
-
-  LSH *l;
-  if (vm.count("load")) {
+  
+  bool BFORCE = vm["bruteforce"].as<bool>();
+  unordered_set<int> searchspace;
+  LSH *l = NULL;
+  if (BFORCE) {
+    cerr << "Caution: Running brute force search...";
+    if (featcounts.size() == 0) {
+      cerr << "Brute force requires feature counts. Exitting..." << endl;
+      return -1;
+    }
+    getAllSearchspace(featcounts, searchspace);
+  } else if (vm.count("load")) {
     cout << "Loading model from " << vm["load"].as<string>() << "...";
     cout.flush();
     ifstream ifs(vm["load"].as<string>(), ios::binary);
@@ -143,7 +152,11 @@ int main(int argc, char* argv[]) {
         }
         
         unordered_set<int> temp;
-        l->search(feat, temp);
+        if (BFORCE) {
+          temp = searchspace;
+        } else {
+          l->search(feat, temp);
+        }
         Resorter::resort_multicore(temp, featstor, feat, res);
         allres[j] = vector<pair<float, int>>(res.begin(), 
             min(res.begin() + vm["topk"].as<int>(), res.end()));
