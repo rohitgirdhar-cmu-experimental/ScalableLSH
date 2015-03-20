@@ -38,6 +38,8 @@ int main(int argc, char* argv[]) {
      "Top-K elements to output after search")
     ("nbits,b", po::value<int>()->default_value(250),
      "Number of bits in the representation")
+    ("ntables,t", po::value<int>()->default_value(15),
+     "Number of random proj tables in the representation")
     ("bruteforce,z", po::bool_switch()->default_value(false),
      "Use brute force search over all the features. (Use with caution)")
     ;
@@ -83,7 +85,7 @@ int main(int argc, char* argv[]) {
     ia >> *l;
     cout << "done." << endl;
   } else if (vm.count("datapath")) {
-    l = new LSH(vm["nbits"].as<int>(), 15, 9216);
+    l = new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>(), 9216);
     vector<float> feat;
     
     high_resolution_clock::time_point pivot = high_resolution_clock::now();
@@ -130,7 +132,6 @@ int main(int argc, char* argv[]) {
       }
 
       vector<vector<pair<float, int>>> allres{featcounts[qlist[i] - 1]};
-    //  #pragma omp parallel for // this didn't really help
       for (int j = 0; j < featcounts[qlist[i] - 1]; j++) {
         vector<pair<float,int>> res;
         #if defined(RAND_SAMPLE) && RAND_SAMPLE == 1
