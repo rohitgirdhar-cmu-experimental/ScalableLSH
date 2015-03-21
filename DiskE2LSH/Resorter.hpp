@@ -1,6 +1,7 @@
 #ifndef RESORTER_HPP
 #define RESORTER_HPP
 
+#include "storage/DiskVectorLMDB.hpp"
 #include "storage/DiskVector.hpp"
 #include "utils.hpp"
 #include "config.hpp"
@@ -25,7 +26,7 @@ public:
    * When one DiskVector has all the features
    */
   void static resort(const unordered_set<int>& matches, 
-      const shared_ptr<DiskVector<vector<float>>>& feats,
+      const std::shared_ptr<DiskVector<vector<float>>>& feats,
       vector<float>& qfeat,
       vector<pair<float, int>>& res) {
     res.clear();
@@ -82,7 +83,7 @@ public:
    * Multicore reranking
    */
   void static resort_multicore(const unordered_set<int>& matches, 
-      const shared_ptr<DiskVectorLMDB<vector<float>>>& feats,
+      const std::shared_ptr<DiskVectorLMDB<vector<float>>>& feats,
       vector<float>& qfeat,
       vector<pair<float, int>>& res) {
     res.clear();

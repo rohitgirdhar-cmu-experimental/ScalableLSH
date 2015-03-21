@@ -1,5 +1,5 @@
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#ifndef DISKE2LSH_UTILS_HPP
+#define DISKE2LSH_UTILS_HPP
 
 #include <cmath>
 #include <boost/filesystem.hpp>
