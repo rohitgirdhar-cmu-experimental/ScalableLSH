@@ -13,6 +13,12 @@ INC += -I$(CAFFE_ROOT)/include/ -I$(CAFFE_ROOT)/build/src/ -I/usr/local/include/
 SEARCH_CODE_PATH=/home/rgirdhar/data/Work/Code/0002_Retrieval/ScalableLSH/DiskE2LSH
 INC += -I$(SEARCH_CODE_PATH) -I$(SEARCH_CODE_PATH)/Eigen
 
+# for the zmq
+INC += -I/home/rgirdhar/data/Software/cpp/zeromq/install/include/
+INC += -I/home/rgirdhar/data/Software/cpp/zeromq/cppzmq/
+LIBS += -L/home/rgirdhar/data/Software/cpp/zeromq/install/lib/
+LDFLAGS += -lzmq
+
 ifneq ($(CPU_ONLY),1)
     LIBS += -L$(CUDA_ROOT)/lib64
     INC += -I$(CUDA_ROOT)/include

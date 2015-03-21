@@ -6,6 +6,7 @@
 #include <memory>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <opencv2/opencv.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -16,6 +17,8 @@
 // from the search code
 #include "LSH.hpp"
 #include "Resorter.hpp"
+// for server
+#include <zmq.h>
 
 using namespace std;
 using namespace caffe;
@@ -45,6 +48,8 @@ main(int argc, char *argv[]) {
      "CNN layer to extract features from")
     ("index,i", po::value<string>()->required(),
      "Path to load search index from")
+    ("featstor,s", po::value<string>()->required(),
+     "Path to feature store")
     ;
 
   po::variables_map vm;
@@ -84,9 +89,9 @@ main(int argc, char *argv[]) {
   bboxes.push_back(Rect(0, 0, I.cols, I.rows)); // full image
   resize(I, I, Size(256, 256));
   Is.push_back(I);
-  vector<vector<float>> output;
-  computeFeatures<float>(caffe_test_net, Is, LAYER, BATCH_SIZE, output);
-  l2NormalizeFeatures(output);
+  vector<vector<float>> feats;
+  computeFeatures<float>(caffe_test_net, Is, LAYER, BATCH_SIZE, feats);
+  l2NormalizeFeatures(feats);
 
   // Do the search
   ifstream ifs(vm["index"].as<string>(), ios::binary);
@@ -95,6 +100,33 @@ main(int argc, char *argv[]) {
   ia >> *l;
   ifs.close();
 
+  auto featstor = std::shared_ptr<DiskVectorLMDB<vector<float>>>(
+      new DiskVectorLMDB<vector<float>>(vm["featstor"].as<string>(), 1));
+
+  //  Socket to talk to clients
+  void *context = zmq_ctx_new();
+  void *responder = zmq_socket(context, ZMQ_REP);
+  int rc = zmq_bind(responder, "tcp://*:5555");
+  assert (rc == 0);
+
+  LOG(INFO) << "Server Ready";
+  LOG(INFO).flush();
+
+  char buffer[1000], outbuf[1000];
+  ostringstream oss;
+  while (1) {
+    zmq_recv (responder, buffer, 1000, 0);
+    LOG(INFO) << "Recieved: " << buffer;
+    LOG(INFO).flush();
+    unordered_set<int> init_matches;
+    vector<pair<float, int>> res;
+    l->search(feats[0], init_matches);
+    Resorter::resort_multicore(init_matches, featstor, feats[0], res);
+    for (int i = 0; i < min(res.size(), (size_t) 20); i++) {
+      oss << res[i].first << ":" << res[i].second << ',';
+    }
+    zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
+  }
   return 0;
 }
 
