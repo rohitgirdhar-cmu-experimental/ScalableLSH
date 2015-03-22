@@ -132,8 +132,8 @@ main(int argc, char *argv[]) {
 
     high_resolution_clock::time_point feat = high_resolution_clock::now();
 
-    unordered_set<int> init_matches;
-    vector<pair<float, int>> res;
+    unordered_set<long long int> init_matches;
+    vector<pair<float, long long int>> res;
     l->search(feats[0], init_matches);
     Resorter::resort_multicore(init_matches, featstor, feats[0], res);
 
