@@ -26,6 +26,8 @@ using namespace cv;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
+void readFromURL(char*, Mat&);
+
 int
 main(int argc, char *argv[]) {
   google::InitGoogleLogging(argv[0]);
@@ -78,28 +80,17 @@ main(int argc, char *argv[]) {
   caffe_test_net.CopyTrainedLayersFrom(trained_net_param);
   int BATCH_SIZE = caffe_test_net.blob_by_name("data")->num();
 
-  string IMPATH = "/home/rgirdhar/memexdata/Dataset/processed/0001_Backpage/Images/corpus/ImagesTexas/Texas_2012_10_10_1349841918000_4_0.jpg";
-  vector<Mat> Is;
-  Mat I = imread(IMPATH);
-  if (!I.data) {
-    LOG(ERROR) << "Unable to read " << IMPATH;
-    return -1;
-  }
-  vector<Rect> bboxes;
-  bboxes.push_back(Rect(0, 0, I.cols, I.rows)); // full image
-  resize(I, I, Size(256, 256));
-  Is.push_back(I);
-  vector<vector<float>> feats;
-  computeFeatures<float>(caffe_test_net, Is, LAYER, BATCH_SIZE, feats);
-  l2NormalizeFeatures(feats);
-
-  // Do the search
+  
+  // Read the search index
+  LOG(INFO) << "Reading the search index...";
   ifstream ifs(vm["index"].as<string>(), ios::binary);
   boost::archive::binary_iarchive ia(ifs);
   std::shared_ptr<LSH> l(new LSH(0,0,0));
   ia >> *l;
   ifs.close();
+  LOG(INFO) << "Done.";
 
+  LOG(INFO) << "Setting up the server...";
   auto featstor = std::shared_ptr<DiskVectorLMDB<vector<float>>>(
       new DiskVectorLMDB<vector<float>>(vm["featstor"].as<string>(), 1));
 
@@ -110,14 +101,30 @@ main(int argc, char *argv[]) {
   assert (rc == 0);
 
   LOG(INFO) << "Server Ready";
-  LOG(INFO).flush();
 
   char buffer[1000], outbuf[1000];
   ostringstream oss;
-  while (1) {
+  while (true) {
+    oss.clear();
     zmq_recv (responder, buffer, 1000, 0);
     LOG(INFO) << "Recieved: " << buffer;
-    LOG(INFO).flush();
+
+    vector<Mat> Is;
+    Mat I;
+    readFromURL(buffer, I);
+    if (!I.data) {
+      oss << "Unable to read " << buffer;
+      zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
+      continue;
+    }
+    vector<Rect> bboxes;
+    bboxes.push_back(Rect(0, 0, I.cols, I.rows)); // full image
+    resize(I, I, Size(256, 256));
+    Is.push_back(I);
+    vector<vector<float>> feats;
+    computeFeatures<float>(caffe_test_net, Is, LAYER, BATCH_SIZE, feats);
+    l2NormalizeFeatures(feats);
+
     unordered_set<int> init_matches;
     vector<pair<float, int>> res;
     l->search(feats[0], init_matches);
@@ -128,5 +135,12 @@ main(int argc, char *argv[]) {
     zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
   }
   return 0;
+}
+
+void readFromURL(char* url, Mat& I) {
+  VideoCapture cap(url);
+  if (cap.isOpened()) {
+    cap >> I;
+  }
 }
 
