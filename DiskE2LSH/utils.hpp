@@ -32,10 +32,10 @@ void readList(const fs::path& fpath, vector<Dtype>& output) {
 }
 
 void getAllSearchspace(const vector<int>& featcounts,
-    unordered_set<int>& searchspace) {
+    unordered_set<long long int>& searchspace) {
   searchspace.clear();
-  for (int i = 0; i < featcounts.size(); i++) {
-    for (int j = 0; j < featcounts[i]; j++) {
+  for (long long int i = 0; i < featcounts.size(); i++) {
+    for (long long int j = 0; j < featcounts[i]; j++) {
       searchspace.insert(i * MAXFEATPERIMG + j);
     }
   }

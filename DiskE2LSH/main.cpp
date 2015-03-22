@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
   }
   
   bool BFORCE = vm["bruteforce"].as<bool>();
-  unordered_set<int> searchspace;
+  unordered_set<long long int> searchspace;
   LSH *l = NULL;
   if (BFORCE) {
     cerr << "Caution: Running brute force search...";
@@ -131,9 +131,9 @@ int main(int argc, char* argv[]) {
         continue;
       }
 
-      vector<vector<pair<float, int>>> allres{featcounts[qlist[i] - 1]};
+      vector<vector<pair<float, long long int>>> allres{featcounts[qlist[i] - 1]};
       for (int j = 0; j < featcounts[qlist[i] - 1]; j++) {
-        vector<pair<float,int>> res;
+        vector<pair<float,long long int>> res;
         #if defined(RAND_SAMPLE) && RAND_SAMPLE == 1
           // randomly keep only 1000 of the windows (since can't do for all of them!)
           float perc =  1000.0f / featcounts[i];
@@ -152,14 +152,14 @@ int main(int argc, char* argv[]) {
           continue;
         }
         
-        unordered_set<int> temp;
+        unordered_set<long long int> temp;
         if (BFORCE) {
           temp = searchspace;
         } else {
           l->search(feat, temp);
         }
         Resorter::resort_multicore(temp, featstor, feat, res);
-        allres[j] = vector<pair<float, int>>(res.begin(), 
+        allres[j] = vector<pair<float, long long int>>(res.begin(), 
             min(res.begin() + vm["topk"].as<int>(), res.end()));
         high_resolution_clock::time_point t2 = high_resolution_clock::now();
         auto duration = duration_cast<milliseconds>(t2 - t1).count();

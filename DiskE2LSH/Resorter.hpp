@@ -25,10 +25,10 @@ public:
   /**
    * When one DiskVector has all the features
    */
-  void static resort(const unordered_set<int>& matches, 
+  void static resort(const unordered_set<long long int>& matches, 
       const std::shared_ptr<DiskVector<vector<float>>>& feats,
       vector<float>& qfeat,
-      vector<pair<float, int>>& res) {
+      vector<pair<float, long long int>>& res) {
     res.clear();
     if (matches.size() == 0) {
       cerr << "0 matches input to resorter..";
@@ -44,7 +44,7 @@ public:
     int nBatches = ceil(nMatches * 1.0f / MAX_RESORT_BATCH_SIZE);
     auto match = matches.begin();
     vector<vector<float>> feats_vec;
-    vector<pair<float, int>> res_batch;
+    vector<pair<float, long long int>> res_batch;
    
     for (int batch = 0; batch < nBatches; batch++) {
       feats_vec.clear();
@@ -82,12 +82,12 @@ public:
   /**
    * Multicore reranking
    */
-  void static resort_multicore(const unordered_set<int>& matches, 
+  void static resort_multicore(const unordered_set<long long int>& matches, 
       const std::shared_ptr<DiskVectorLMDB<vector<float>>>& feats,
       vector<float>& qfeat,
-      vector<pair<float, int>>& res) {
+      vector<pair<float, long long int>>& res) {
     res.clear();
-    vector<int> matches_vec(matches.begin(), matches.end());
+    vector<long long int> matches_vec(matches.begin(), matches.end());
     if (matches.size() == 0) {
       cerr << "0 matches input to resorter..";
       return;

@@ -13,17 +13,17 @@ public:
       tables.push_back(Table(k, dim));
     }
   }
-  void insert(const vector<float>& feat, int label) {
+  void insert(const vector<float>& feat, long long int label) {
     #pragma omp parallel for
     for (int i = 0; i < tables.size(); i++) {
       tables[i].insert(feat, label);
     }
   }
-  void search(const vector<float>& feat, unordered_set<int>& output) const {
+  void search(const vector<float>& feat, unordered_set<long long int>& output) const {
     output.clear();
     #pragma omp parallel for
     for (int i = 0; i < tables.size(); i++) {
-      unordered_set<int> part;
+      unordered_set<long long int> part;
       tables[i].search(feat, part);
       #pragma omp critical
       output.insert(part.begin(), part.end());

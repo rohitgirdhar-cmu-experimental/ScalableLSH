@@ -20,24 +20,24 @@ struct vectorint_hash {
 class Table {
   friend class boost::serialization::access;
   LSHFunc lshFunc;
-  unordered_map<vector<int>, unordered_set<int>, vectorint_hash> index;
+  unordered_map<vector<int>, unordered_set<long long int>, vectorint_hash> index;
 public:
   Table(int k, int dim) : lshFunc(k, dim) {}
   Table() {} // used for serializing
-  void insert(const vector<float>& feat, int label) {
+  void insert(const vector<float>& feat, long long int label) {
     vector<int> hash;
     lshFunc.computeHash(feat, hash);
 
     auto pos = index.find(hash);
     if (pos == index.end()) {
-      unordered_set<int> lst; 
+      unordered_set<long long int> lst; 
       lst.insert(label);
       index[hash] = lst;
     } else {
       pos->second.insert(label);
     }
   }
-  bool search(const vector<float>& feat, unordered_set<int>& output) const {
+  bool search(const vector<float>& feat, unordered_set<long long int>& output) const {
     vector<int> hash;
     lshFunc.computeHash(feat, hash);
     auto pos = index.find(hash);
