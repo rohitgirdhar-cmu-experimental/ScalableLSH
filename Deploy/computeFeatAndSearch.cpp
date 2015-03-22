@@ -105,11 +105,11 @@ main(int argc, char *argv[]) {
   LOG(INFO) << "Server Ready";
 
   while (true) {
-    high_resolution_clock::time_point st = high_resolution_clock::now();
     char buffer[1000], outbuf[1000];
     ostringstream oss;
     zmq_recv (responder, buffer, 1000, 0);
     LOG(INFO) << "Recieved: " << buffer;
+    high_resolution_clock::time_point st = high_resolution_clock::now();
 
     vector<Mat> Is;
     Mat I;
