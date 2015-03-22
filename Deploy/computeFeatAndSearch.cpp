@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <chrono>
 #include <opencv2/opencv.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -21,12 +22,13 @@
 #include <zmq.h>
 
 using namespace std;
+using namespace std::chrono;
 using namespace caffe;
 using namespace cv;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-void readFromURL(char*, Mat&);
+void readFromURL(const string&, Mat&);
 
 int
 main(int argc, char *argv[]) {
@@ -102,16 +104,16 @@ main(int argc, char *argv[]) {
 
   LOG(INFO) << "Server Ready";
 
-  char buffer[1000], outbuf[1000];
-  ostringstream oss;
   while (true) {
-    oss.clear();
+    high_resolution_clock::time_point st = high_resolution_clock::now();
+    char buffer[1000], outbuf[1000];
+    ostringstream oss;
     zmq_recv (responder, buffer, 1000, 0);
     LOG(INFO) << "Recieved: " << buffer;
 
     vector<Mat> Is;
     Mat I;
-    readFromURL(buffer, I);
+    readFromURL(string(buffer), I);
     if (!I.data) {
       oss << "Unable to read " << buffer;
       zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
@@ -121,26 +123,37 @@ main(int argc, char *argv[]) {
     bboxes.push_back(Rect(0, 0, I.cols, I.rows)); // full image
     resize(I, I, Size(256, 256));
     Is.push_back(I);
+
+    high_resolution_clock::time_point read = high_resolution_clock::now();
+
     vector<vector<float>> feats;
     computeFeatures<float>(caffe_test_net, Is, LAYER, BATCH_SIZE, feats);
     l2NormalizeFeatures(feats);
+
+    high_resolution_clock::time_point feat = high_resolution_clock::now();
 
     unordered_set<int> init_matches;
     vector<pair<float, int>> res;
     l->search(feats[0], init_matches);
     Resorter::resort_multicore(init_matches, featstor, feats[0], res);
+
+    high_resolution_clock::time_point search = high_resolution_clock::now();
+
     for (int i = 0; i < min(res.size(), (size_t) 20); i++) {
       oss << res[i].first << ":" << res[i].second << ',';
     }
     zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
+    LOG(INFO) << "Time taken: " 
+              << " Read : " << duration_cast<milliseconds>(read - st).count() << "ms" << endl
+              << " Ext Feat : " << duration_cast<milliseconds>(feat - read).count() << "ms" << endl
+              << " Search : " << duration_cast<milliseconds>(search - feat).count() << "ms" << endl;
   }
   return 0;
 }
 
-void readFromURL(char* url, Mat& I) {
-  VideoCapture cap(url);
-  if (cap.isOpened()) {
-    cap >> I;
-  }
+void readFromURL(const string& url, Mat& I) {
+  string temppath = "/tmp/temp-img.jpg";
+  system((string("wget ") + url + " -O " + temppath).c_str());
+  I = imread(temppath.c_str());
 }
 

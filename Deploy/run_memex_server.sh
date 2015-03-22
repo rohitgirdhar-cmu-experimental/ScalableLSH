@@ -1,6 +1,6 @@
 BASE_PATH=/home/rgirdhar/data/Work/Code/0001_FeatureExtraction/ComputeFeatures/Features/CNN
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${BASE_PATH}/external/caffe_dev_MemLayerWithMat/build/lib/:/home/rgirdhar/data/Software/cpp/zeromq/install/lib/
-./computeFeatAndSearch.bin \
+GLOG_logtostderr=1 ./computeFeatAndSearch.bin \
     -n deploy.prototxt \
     -m /home/rgirdhar/data/Software/vision/caffe/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel \
     -l pool5 \
