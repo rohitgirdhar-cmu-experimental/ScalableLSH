@@ -34,6 +34,8 @@ int main(int argc, char* argv[]) {
      "Number of bits in the representation")
     ("ntables,t", po::value<int>()->default_value(15),
      "Number of random proj tables in the representation")
+    ("saveafter,a", po::value<int>()->default_value(1800), // every 1/2 hour
+     "Time after which to snapshot the model (seconds)")
     ;
 
   po::variables_map vm;
@@ -50,6 +52,7 @@ int main(int argc, char* argv[]) {
   }
   
   // read the list of images to hash
+  int saveafter = vm["saveafter"].as<int>();
   vector<fs::path> imgslst;
   readList(vm["dimgslist"].as<string>(), imgslst);
   vector<int> featcounts(imgslst.size(), 1); // default: 1 feat/image
@@ -61,7 +64,8 @@ int main(int argc, char* argv[]) {
   std::shared_ptr<LSH> l(new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>(), 9216));
   vector<float> feat;
   
-  high_resolution_clock::time_point pivot = high_resolution_clock::now();
+  high_resolution_clock::time_point pivot, last_save;
+  pivot = last_save = high_resolution_clock::now();
   DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1);
   for (int i = 0; i < imgslst.size(); i++) {
     for (int j = 0; j < featcounts[i]; j++) {
@@ -75,6 +79,17 @@ int main(int argc, char* argv[]) {
            << " in " 
            << duration_cast<milliseconds>(pivot2 - pivot).count()
            << "ms" <<endl;
+      if (duration_cast<seconds>(pivot2 - last_save).count() >= saveafter) {
+        if (vm.count("save")) {
+          cout << "Saving model to " << vm["save"].as<string>() << "...";
+          cout.flush();
+          ofstream ofs(vm["save"].as<string>(), ios::binary);
+          boost::archive::binary_oarchive oa(ofs);
+          oa << *l;
+          cout << "done." << endl;
+        }
+        last_save = pivot2;
+      }
       pivot = pivot2;
     }
   }
