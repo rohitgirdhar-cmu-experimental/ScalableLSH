@@ -4,6 +4,7 @@ GLOG_logtostderr=1 ./computeFeatAndSearch.bin \
     -n deploy.prototxt \
     -m /home/rgirdhar/data/Software/vision/caffe/models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel \
     -l pool5 \
-    -i ~/data/Work/Datasets/processed/0004_PALn1KHayesDistractor/search_models/search_250bit.index \
-    -s /srv2/rgirdhar/Work/Datasets/processed/0004_PALn1KHayesDistractor/features/CNN_pool5_uni_normed_LMDB
+    -i /home/rgirdhar/memexdata/Dataset/processed/0001_Backpage/Search/indexes/fullImg_250bit.index \
+    -s /home/rgirdhar/memexdata/Dataset/processed/0001_Backpage/Features/CNN/pool5_normed \
+    --imgslist /home/rgirdhar/memexdata/Dataset/processed/0001_Backpage/Images/lists/Images.txt
 

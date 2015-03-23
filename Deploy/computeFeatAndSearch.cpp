@@ -21,6 +21,8 @@
 // for server
 #include <zmq.h>
 
+#define MAXFEATPERIMG 10000
+
 using namespace std;
 using namespace std::chrono;
 using namespace caffe;
@@ -29,6 +31,7 @@ namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 void readFromURL(const string&, Mat&);
+string convertToFname(long long idx, const vector<fs::path>& imgslist);
 
 int
 main(int argc, char *argv[]) {
@@ -54,6 +57,8 @@ main(int argc, char *argv[]) {
      "Path to load search index from")
     ("featstor,s", po::value<string>()->required(),
      "Path to feature store")
+    ("imgslist,q", po::value<string>()->required(),
+     "File with images list")
     ;
 
   po::variables_map vm;
@@ -73,6 +78,8 @@ main(int argc, char *argv[]) {
   fs::path MODEL_PATH = 
     fs::path(vm["model-path"].as<string>());
   string LAYER = vm["layer"].as<string>();
+  vector<fs::path> imgslist;
+  readList(vm["imgslist"].as<string>(), imgslist);
 
   NetParameter test_net_params;
   ReadProtoFromTextFile(NETWORK_PATH.string(), &test_net_params);
@@ -140,10 +147,10 @@ main(int argc, char *argv[]) {
     high_resolution_clock::time_point search = high_resolution_clock::now();
 
     for (int i = 0; i < min(res.size(), (size_t) 20); i++) {
-      oss << res[i].first << ":" << res[i].second << ',';
+      oss << res[i].first << ":" << convertToFname(res[i].second, imgslist) << ',';
     }
     zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
-    LOG(INFO) << "Time taken: " 
+    LOG(INFO) << "Time taken: " << endl
               << " Read : " << duration_cast<milliseconds>(read - st).count() << "ms" << endl
               << " Ext Feat : " << duration_cast<milliseconds>(feat - read).count() << "ms" << endl
               << " Search : " << duration_cast<milliseconds>(search - feat).count() << "ms" << endl;
@@ -155,5 +162,9 @@ void readFromURL(const string& url, Mat& I) {
   string temppath = "/tmp/temp-img.jpg";
   system((string("wget ") + url + " -O " + temppath).c_str());
   I = imread(temppath.c_str());
+}
+
+string convertToFname(long long idx, const vector<fs::path>& imgslist) {
+  return imgslist[idx / MAXFEATPERIMG - 1].filename().string();
 }
 
