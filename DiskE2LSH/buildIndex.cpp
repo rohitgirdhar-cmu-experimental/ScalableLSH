@@ -28,6 +28,8 @@ int main(int argc, char* argv[]) {
      "File with list of all images")
     ("featcount,c", po::value<string>()->default_value(""),
      "File with list of number of features in each image")
+    ("load,l", po::value<string>(),
+     "Path to load the initial hash table")
     ("save,s", po::value<string>(),
      "Path to save the hash table")
     ("nbits,b", po::value<int>()->default_value(250),
@@ -62,6 +64,12 @@ int main(int argc, char* argv[]) {
   }
   
   std::shared_ptr<LSH> l(new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>(), 9216));
+  if (vm.count("load")) {
+    ifstream ifs(vm["load"].as<string>(), ios::binary);
+    boost::archive::binary_iarchive ia(ifs);
+    ia >> *l;
+    cout << "Loaded the search model for update" << endl;
+  }
   vector<float> feat;
   
   high_resolution_clock::time_point pivot, last_save;
@@ -70,6 +78,10 @@ int main(int argc, char* argv[]) {
   for (int i = 0; i < imgslst.size(); i++) {
     for (int j = 0; j < featcounts[i]; j++) {
       long long idx = getIndex(i+1, j+1);
+      if (l->lastLabelInserted >= idx) {
+        cout << "Ignoring " << idx << ". Already exists in the index" << endl;
+        continue;
+      }
       if (!tree.Get(idx, feat)) break;
       l->insert(feat, idx);
     }
