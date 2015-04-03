@@ -8,7 +8,8 @@ class LSH {
   friend class boost::serialization::access;
   vector<Table> tables;
 public:
-  long long lastLabelInserted;
+  long long lastLabelInserted; // IMPORTANT. It only inserts a feature if its index is greater than
+                               // this number. So make sure the labels are increasing order
   LSH(int k, int L, int dim) {
     for (int i = 0; i < L; i++) {
       tables.push_back(Table(k, dim));

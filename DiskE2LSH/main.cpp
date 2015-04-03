@@ -1,3 +1,8 @@
+/**
+ * This is now deprecated for building index. 
+ * Use buildIndex.cpp now
+ */
+
 #include <iostream>
 #include <chrono>
 #include <boost/program_options.hpp>
@@ -16,7 +21,6 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
-  
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help,h", "Show this help")
