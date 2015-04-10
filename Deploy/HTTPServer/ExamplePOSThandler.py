@@ -1,4 +1,5 @@
 import zmq
+import json
 
 class a_POST_handler:
   def __init__(self,a_number):
@@ -21,6 +22,8 @@ class a_POST_handler:
 
           # retrieve the result from zmq and return
           resp = self.retrieveMatches(text)
+          # convert to JSON
+          resp = self.convertToJSON(resp)
 
           self.sendResponse(resp,request_handler)
         else:
@@ -41,4 +44,8 @@ class a_POST_handler:
         socket.send(text + "\0")
         message = socket.recv()
         return message
-
+  
+  def convertToJSON(self, resp):
+        matches = [m.split(':') for m in resp.strip().split(',')][:-1]
+        matches = [(m[1], float(m[0])) for m in matches]
+        return json.dumps(matches)
