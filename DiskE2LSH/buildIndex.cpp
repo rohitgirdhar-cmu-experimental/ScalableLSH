@@ -75,11 +75,12 @@ int main(int argc, char* argv[]) {
   high_resolution_clock::time_point pivot, last_save;
   pivot = last_save = high_resolution_clock::now();
   DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1);
+
+  cout << "Ignoring uptil (and including) " << l->lastLabelInserted << ". Already exists in the index" << endl;
   for (int i = 0; i < imgslst.size(); i++) {
     for (int j = 0; j < featcounts[i]; j++) {
       long long idx = getIndex(i+1, j+1);
       if (l->lastLabelInserted >= idx) {
-        cout << "Ignoring " << idx << ". Already exists in the index" << endl;
         continue;
       }
       if (!tree.Get(idx, feat)) break;
