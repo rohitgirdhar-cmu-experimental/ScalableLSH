@@ -25,9 +25,10 @@ int main(int argc, char* argv[]) {
     ("datapath,d", po::value<string>()->required(),
      "Path to LMDB where the data is stored")
     ("dimgslist,n", po::value<string>()->required(),
-     "File with list of all images")
+     "File with indexes (1-indexed) of all images to be added to table")
     ("featcount,c", po::value<string>()->default_value(""),
-     "File with list of number of features in each image")
+     "File with list of number of features in each image."
+     "NOT correspoding to above list, but for all images in global imgslist")
     ("load,l", po::value<string>(),
      "Path to load the initial hash table")
     ("save,s", po::value<string>(),
@@ -38,6 +39,8 @@ int main(int argc, char* argv[]) {
      "Number of random proj tables in the representation")
     ("saveafter,a", po::value<int>()->default_value(1800), // every 1/2 hour
      "Time after which to snapshot the model (seconds)")
+    ("printafter", po::value<int>()->default_value(5), // every 5 seconds
+     "Time after which to print output (seconds)")
     ;
 
   po::variables_map vm;
@@ -55,7 +58,8 @@ int main(int argc, char* argv[]) {
   
   // read the list of images to hash
   int saveafter = vm["saveafter"].as<int>();
-  vector<fs::path> imgslst;
+  int printafter = vm["printafter"].as<int>();
+  vector<int> imgslst;
   readList(vm["dimgslist"].as<string>(), imgslst);
   vector<int> featcounts(imgslst.size(), 1); // default: 1 feat/image
   if (vm["featcount"].as<string>().length() > 0) {
@@ -72,12 +76,16 @@ int main(int argc, char* argv[]) {
   }
   vector<float> feat;
   
-  high_resolution_clock::time_point pivot, last_save;
-  pivot = last_save = high_resolution_clock::now();
+  high_resolution_clock::time_point last_print, last_save;
+  last_print = last_save = high_resolution_clock::now();
   DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1);
 
-  cout << "Ignoring uptil (and including) " << l->lastLabelInserted << ". Already exists in the index" << endl;
-  for (int i = 0; i < imgslst.size(); i++) {
+  if (l->lastLabelInserted >= 0) {
+    cout << "Ignoring uptil (and including) " << l->lastLabelInserted 
+         << ". Already exists in the index" << endl;
+  }
+  for (int meta_i = 0; meta_i < imgslst.size(); meta_i++) {
+    int i = imgslst[meta_i] - 1; // hash this image
     for (int j = 0; j < featcounts[i]; j++) {
       long long idx = getIndex(i+1, j+1);
       if (l->lastLabelInserted >= idx) {
@@ -86,24 +94,24 @@ int main(int argc, char* argv[]) {
       if (!tree.Get(idx, feat)) break;
       l->insert(feat, idx);
     }
-    if (i % 100 == 0) {
-      high_resolution_clock::time_point pivot2 = high_resolution_clock::now();
-      cout << "Done for " << i + 1  << "/" << imgslst.size()
+    high_resolution_clock::time_point now = high_resolution_clock::now();
+    if (duration_cast<seconds>(now - last_print).count() >= printafter) {
+      cout << "Done for " << meta_i + 1  << "/" << imgslst.size()
            << " in " 
-           << duration_cast<milliseconds>(pivot2 - pivot).count()
+           << duration_cast<milliseconds>(now - last_print).count()
            << "ms" <<endl;
-      if (duration_cast<seconds>(pivot2 - last_save).count() >= saveafter) {
-        if (vm.count("save")) {
-          cout << "Saving model to " << vm["save"].as<string>() << "...";
-          cout.flush();
-          ofstream ofs(vm["save"].as<string>(), ios::binary);
-          boost::archive::binary_oarchive oa(ofs);
-          oa << *l;
-          cout << "done." << endl;
-        }
-        last_save = pivot2;
+      last_print = now;
+    }
+    if (duration_cast<seconds>(now - last_save).count() >= saveafter) {
+      if (vm.count("save")) {
+        cout << "Saving model to " << vm["save"].as<string>() << "...";
+        cout.flush();
+        ofstream ofs(vm["save"].as<string>(), ios::binary);
+        boost::archive::binary_oarchive oa(ofs);
+        oa << *l;
+        cout << "done." << endl;
       }
-      pivot = pivot2;
+      last_save = now;
     }
   }
 
