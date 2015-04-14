@@ -24,7 +24,9 @@ int main(int argc, char* argv[]) {
     ("help,h", "Show this help")
     ("datapath,d", po::value<string>()->required(),
      "Path to LMDB where the data is stored")
-    ("dimgslist,n", po::value<string>()->required(),
+    ("imgslist,n", po::value<string>()->required(),
+     "Filenames of all images in the corpus")
+    ("ids2compute4", po::value<string>()->required(),
      "File with indexes (1-indexed) of all images to be added to table")
     ("featcount,c", po::value<string>()->default_value(""),
      "File with list of number of features in each image."
@@ -59,13 +61,15 @@ int main(int argc, char* argv[]) {
   // read the list of images to hash
   int saveafter = vm["saveafter"].as<int>();
   int printafter = vm["printafter"].as<int>();
-  vector<int> imgslst;
-  readList(vm["dimgslist"].as<string>(), imgslst);
+  vector<fs::path> imgslst;
+  readList(vm["imgslist"].as<string>(), imgslst);
   vector<int> featcounts(imgslst.size(), 1); // default: 1 feat/image
   if (vm["featcount"].as<string>().length() > 0) {
     featcounts.clear();
     readList(vm["featcount"].as<string>(), featcounts);
   }
+  vector<int> imgComputeIds;
+  readList(vm["ids2compute4"].as<string>(), imgComputeIds);
   
   std::shared_ptr<LSH> l(new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>(), 9216));
   if (vm.count("load")) {
@@ -84,8 +88,8 @@ int main(int argc, char* argv[]) {
     cout << "Ignoring uptil (and including) " << l->lastLabelInserted 
          << ". Already exists in the index" << endl;
   }
-  for (int meta_i = 0; meta_i < imgslst.size(); meta_i++) {
-    int i = imgslst[meta_i] - 1; // hash this image
+  for (int meta_i = 0; meta_i < imgComputeIds.size(); meta_i++) {
+    int i = imgComputeIds[meta_i] - 1; // hash this image
     for (int j = 0; j < featcounts[i]; j++) {
       long long idx = getIndex(i+1, j+1);
       if (l->lastLabelInserted >= idx) {
@@ -96,7 +100,7 @@ int main(int argc, char* argv[]) {
     }
     high_resolution_clock::time_point now = high_resolution_clock::now();
     if (duration_cast<seconds>(now - last_print).count() >= printafter) {
-      cout << "Done for " << meta_i + 1  << "/" << imgslst.size()
+      cout << "Done for " << meta_i + 1  << "/" << imgComputeIds.size()
            << " in " 
            << duration_cast<milliseconds>(now - last_print).count()
            << "ms" <<endl;
