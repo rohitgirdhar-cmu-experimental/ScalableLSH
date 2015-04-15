@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
      "Path to LMDB where the data is stored")
     ("imgslist,n", po::value<string>()->required(),
      "Filenames of all images in the corpus")
-    ("ids2compute4", po::value<string>()->required(),
+    ("ids2compute4", po::value<string>()->default_value(""),
      "File with indexes (1-indexed) of all images to be added to table")
     ("featcount,c", po::value<string>()->default_value(""),
      "File with list of number of features in each image."
@@ -69,7 +69,14 @@ int main(int argc, char* argv[]) {
     readList(vm["featcount"].as<string>(), featcounts);
   }
   vector<int> imgComputeIds;
-  readList(vm["ids2compute4"].as<string>(), imgComputeIds);
+  if (vm["ids2compute4"].as<string>().length() > 0) {
+    readList(vm["ids2compute4"].as<string>(), imgComputeIds);
+  } else {
+    // all images
+    for (int i = 1; i <= imgslst.size(); i++) {
+      imgComputeIds.push_back(i);
+    }
+  }
   
   std::shared_ptr<LSH> l(new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>(), 9216));
   if (vm.count("load")) {
