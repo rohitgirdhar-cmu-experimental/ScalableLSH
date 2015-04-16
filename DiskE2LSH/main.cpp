@@ -52,6 +52,10 @@ int main(int argc, char* argv[]) {
     ("boxes2run4", po::value<string>()->default_value(""),
      "Path to directory with files with list of selsearch ids to run for. "
      "Each list must be 1-indexed.")
+    ("reranklimit", po::value<int>()->default_value(-1),
+     "Limit the number of matching feature that will be reranked."
+     "If there are more than this number, that bounding box will be ignored"
+     "(no results outputted). Default = -1 => no limits")
     ;
 
   po::variables_map vm;
@@ -191,13 +195,14 @@ int main(int argc, char* argv[]) {
         } else {
           l->search(feat, temp);
         }
-        #if defined(MAX_RERANK)
-          // check number of elts in temp, and remove all if more than MAX_RERANK
-          if (temp.size() > MAX_RERANK) {
-            allres[j] = res;
-            continue;
-          }
-        #endif
+        
+        // enforce limit on number of features that get re-ranked
+        int rerank_limit = vm["reranklimit"].as<int>();
+        if (rerank_limit >= 0 && temp.size() > rerank_limit) {
+          allres[j] = res;
+          continue;
+        }
+        
         Resorter::resort_multicore(temp, featstor, feat, res);
         allres[j] = vector<pair<float, long long int>>(res.begin(), 
             min(res.begin() + vm["topk"].as<int>(), res.end()));
