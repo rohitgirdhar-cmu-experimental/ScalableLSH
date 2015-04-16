@@ -34,11 +34,45 @@ void readList(const fs::path& fpath, vector<Dtype>& output) {
 void getAllSearchspace(const vector<int>& featcounts,
     unordered_set<long long int>& searchspace) {
   searchspace.clear();
-  for (long long int i = 0; i < featcounts.size(); i++) {
-    for (long long int j = 0; j < featcounts[i]; j++) {
+  for (long long int i = 1; i <= featcounts.size(); i++) {
+    for (long long int j = 1; j <= featcounts[i]; j++) {
       searchspace.insert(i * MAXFEATPERIMG + j);
     }
   }
+}
+
+std::vector<std::string> &split(const std::string &s, 
+    char delim, std::vector<std::string> &elems) {
+  std::stringstream ss(s);
+  std::string item;
+  while (std::getline(ss, item, delim)) {
+    elems.push_back(item);
+  }
+  return elems;
+}
+
+std::vector<std::string> split(const std::string &s, char delim) {
+  std::vector<std::string> elems;
+  split(s, delim, elems);
+  return elems;
+}
+
+void readResults(const fs::path& fpath,
+    vector<vector<pair<float, long long>>>& allres) {
+  ifstream fin(fpath.string());
+  string line;
+  int lno = -1;
+  while (getline(fin, line)) {
+    lno++;
+    if (line.length() <= 0) continue;
+    vector<string> elems = split(line, ' ');
+    for (int i = 0; i < elems.size(); i++) {
+      if (elems[i].length() <= 0) continue;
+      vector<string> p = split(elems[i], ':');
+      allres[lno].push_back(make_pair(stof(p[0]), stoll(p[1])));
+    }
+  }
+  fin.close();
 }
 
 #endif

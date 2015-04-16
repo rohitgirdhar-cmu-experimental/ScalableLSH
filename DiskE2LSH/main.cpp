@@ -46,6 +46,9 @@ int main(int argc, char* argv[]) {
      "Number of random proj tables in the representation")
     ("bruteforce,z", po::bool_switch()->default_value(false),
      "Use brute force search over all the features. (Use with caution)")
+    ("updateres,u", po::bool_switch()->default_value(false),
+     "Update the results. This will read the existing results, and not modify"
+     "it if it has been computed for any patch")
     ;
 
   po::variables_map vm;
@@ -130,17 +133,28 @@ int main(int argc, char* argv[]) {
       // by default, search on all features in the image.
       fs::path fpath = fs::path(vm["outdir"].as<string>()) /
           fs::path(to_string(static_cast<long long>(qlist[i])) + ".txt");
-      if (!lock(fpath)) {
+      if (!vm["updateres"].as<bool>() && !lock(fpath)) {
         cerr << "Skipping " << fpath << "..." << endl;
         continue;
+      } else if (vm["updateres"].as<bool>()) {
+        cerr << "[CAUTION] Running result update: Locks will not be made. "
+             << "So, run only 1 copy of this program." << endl;
       }
 
       vector<vector<pair<float, long long int>>> allres{featcounts[qlist[i] - 1]};
+      if (vm["updateres"].as<bool>()) {
+        // read in the current status of results
+        readResults(fpath, allres);
+      }
       for (int j = 0; j < featcounts[qlist[i] - 1]; j++) {
+        if (allres[j].size() > 0) {
+          // means already solved (maybe read from output file in update step)
+          continue;
+        }
         vector<pair<float,long long int>> res;
-        #if defined(RAND_SAMPLE) && RAND_SAMPLE == 1
+        #if defined(RAND_SAMPLE)
           // randomly keep only 1000 of the windows (since can't do for all of them!)
-          float perc =  1000.0f / featcounts[i];
+          float perc = (RAND_SAMPLE * 1.0f) / featcounts[i];
           if ((double) rand() / RAND_MAX > perc) {
             allres[j] = res;
             continue;
@@ -148,7 +162,7 @@ int main(int argc, char* argv[]) {
         #endif
 
         high_resolution_clock::time_point t1 = high_resolution_clock::now();
-        int idx = (qlist[i] - 1) * MAXFEATPERIMG + j;
+        int idx = (qlist[i]) * MAXFEATPERIMG + j + 1;
         vector<float> feat;
         if (!featstor->Get(idx, feat)) {
           cerr << "Ignoring..." << endl;
@@ -162,6 +176,13 @@ int main(int argc, char* argv[]) {
         } else {
           l->search(feat, temp);
         }
+        #if defined(MAX_RERANK)
+          // check number of elts in temp, and remove all if more than MAX_RERANK
+          if (temp.size() > MAX_RERANK) {
+            allres[j] = res;
+            continue;
+          }
+        #endif
         Resorter::resort_multicore(temp, featstor, feat, res);
         allres[j] = vector<pair<float, long long int>>(res.begin(), 
             min(res.begin() + vm["topk"].as<int>(), res.end()));
@@ -175,7 +196,7 @@ int main(int argc, char* argv[]) {
       for (auto res = allres.begin(); res != allres.end(); res++) {
         int pos = 0;
         for (auto it = res->begin(); it != res->end(); it++) {
-          fout << it->second + 1 << ":" << it->first << " ";
+          fout << it->second << ":" << it->first << " ";
         }
         fout << endl;
       }
