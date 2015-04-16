@@ -49,6 +49,9 @@ int main(int argc, char* argv[]) {
     ("updateres,u", po::bool_switch()->default_value(false),
      "Update the results. This will read the existing results, and not modify"
      "it if it has been computed for any patch")
+    ("boxes2run4", po::value<string>()->default_value(""),
+     "Path to directory with files with list of selsearch ids to run for. "
+     "Each list must be 1-indexed.")
     ;
 
   po::variables_map vm;
@@ -146,7 +149,19 @@ int main(int argc, char* argv[]) {
         // read in the current status of results
         readResults(fpath, allres);
       }
-      for (int j = 0; j < featcounts[qlist[i] - 1]; j++) {
+
+      // read list of boxes
+      vector<int> boxes2run4; // 1 indexed
+      if (vm["boxes2run4"].as<string>().length() > 0) {
+        readList(vm["boxes2run4"].as<string>() + "/" + to_string((long long) qlist[i]) + ".txt", boxes2run4);
+      } else {
+        for (int j = 0; j < featcounts[qlist[i] - 1]; j++) {
+          boxes2run4.push_back(j + 1);
+        }
+      }
+
+      for (int meta_j = 0; meta_j < boxes2run4.size(); meta_j++) {
+        int j = boxes2run4[meta_j] - 1; // 0 indexed j
         if (allres[j].size() > 0) {
           // means already solved (maybe read from output file in update step)
           continue;

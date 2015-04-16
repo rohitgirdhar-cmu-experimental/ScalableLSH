@@ -25,6 +25,10 @@ void readList(const fs::path& fpath, vector<Dtype>& output) {
   output.clear();
   Dtype el;
   ifstream ifs(fpath.string());
+  if (! ifs.is_open()) {
+    cerr << "Unable to open " << fpath << endl;
+    return;
+  }
   while (ifs >> el) {
     output.push_back(el);
   } 
@@ -60,6 +64,10 @@ std::vector<std::string> split(const std::string &s, char delim) {
 void readResults(const fs::path& fpath,
     vector<vector<pair<float, long long>>>& allres) {
   ifstream fin(fpath.string());
+  if (!fin.is_open()) {
+    cerr << "Unable to read file " << fpath << endl;
+    return;
+  }
   string line;
   int lno = -1;
   while (getline(fin, line)) {
