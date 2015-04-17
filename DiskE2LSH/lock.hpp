@@ -10,9 +10,14 @@ namespace fs = boost::filesystem;
  * Function to lock the access to file. Return true if previously unlocked and now able to
  * lock
  */
-bool lock(fs::path fpath) {
+// set updateLock = true if you want a lock even if the output file exists
+// This is useful when you want to update files
+bool lock(fs::path fpath, bool updateLock = false) {
     fs::path lock_fpath = fs::path(fpath.string() + ".lock");
-    if (fs::exists(fpath) || fs::exists(lock_fpath)) return false;
+    // if updateLock specified, make a lock even if the file exists
+    if (fs::exists(lock_fpath) || (!updateLock && fs::exists(fpath))) {
+      return false;
+    }
     fs::create_directories(lock_fpath);
     return true;
 }

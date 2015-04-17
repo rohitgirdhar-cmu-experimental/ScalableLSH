@@ -140,12 +140,19 @@ int main(int argc, char* argv[]) {
       // by default, search on all features in the image.
       fs::path fpath = fs::path(vm["outdir"].as<string>()) /
           fs::path(to_string(static_cast<long long>(qlist[i])) + ".txt");
-      if (!vm["updateres"].as<bool>() && !lock(fpath)) {
-        cerr << "Skipping " << fpath << "..." << endl;
-        continue;
-      } else if (vm["updateres"].as<bool>()) {
-        cerr << "[CAUTION] Running result update: Locks will not be made. "
-             << "So, run only 1 copy of this program." << endl;
+      if (!lock(fpath)) {
+        if (vm["updateres"].as<bool>()) {
+          cerr << "Update results specified. Trying to get update lock...";
+          if (lock(fpath, true)) {
+            cerr << "UpdateLock acquired" << endl;
+          } else {
+            cerr << "Skipping " << fpath << "..." << endl;
+            continue;
+          }
+        } else {
+          cerr << "Skipping " << fpath << "..." << endl;
+          continue;
+        }
       }
 
       vector<vector<pair<float, long long int>>> allres{featcounts[qlist[i] - 1]};
