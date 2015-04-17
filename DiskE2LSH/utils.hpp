@@ -83,5 +83,12 @@ void readResults(const fs::path& fpath,
   fin.close();
 }
 
+/**
+ * Assumes both input featid and imgid are 1 indexed
+ */
+int computeFeatId(int imgid, int featid) {
+  return imgid * MAXFEATPERIMG + featid;
+}
+
 #endif
 

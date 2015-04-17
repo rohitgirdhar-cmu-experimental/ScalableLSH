@@ -124,6 +124,31 @@ public:
     reverse(res.begin(), res.end());
   }
 
+  /**
+   * A one-off function to do nxn similarity for all features in an image
+   */
+  void static computePairwiseSim(
+      const std::shared_ptr<DiskVectorLMDB<vector<float>>>& feats,
+      int imgid, // 1-indexed
+      int numFeat, // num of features in this image
+      Eigen::MatrixXf& simsOutput) {
+    vector<vector<float>> data;
+    for (int i = 1; i <= numFeat; i++) {
+      int featid = computeFeatId(imgid, i);
+      vector<float> temp;
+      if (!feats->Get(featid, temp)) {
+        cerr << "Couldn't read featid = " << featid << endl;
+        continue;
+      }
+      data.push_back(temp);
+    }
+    if (data.size() == 0) return;
+    Eigen::MatrixXf featmat(numFeat, data[0].size());
+    for (int i =0; i < numFeat; i++) {
+      featmat.row(i) = Eigen::VectorXf::Map(&data[i][0], data[i].size());
+    }
+    simsOutput = featmat * featmat.transpose();
+  }
 
   /**
    * When multiple DiskVector have the features
