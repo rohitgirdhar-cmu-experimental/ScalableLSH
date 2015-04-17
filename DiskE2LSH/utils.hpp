@@ -77,7 +77,7 @@ void readResults(const fs::path& fpath,
     for (int i = 0; i < elems.size(); i++) {
       if (elems[i].length() <= 0) continue;
       vector<string> p = split(elems[i], ':');
-      allres[lno].push_back(make_pair(stof(p[0]), stoll(p[1])));
+      allres[lno].push_back(make_pair(stof(p[1]), stoll(p[0])));
     }
   }
   fin.close();
