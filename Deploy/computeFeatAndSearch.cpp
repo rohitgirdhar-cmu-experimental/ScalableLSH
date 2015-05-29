@@ -42,7 +42,6 @@ main(int argc, char *argv[]) {
 #else
   Caffe::set_mode(Caffe::GPU);
 #endif
-  Caffe::set_phase(Caffe::TEST); // important, else will give random features
 
   po::options_description desc("Allowed options");
   desc.add_options()
@@ -59,6 +58,11 @@ main(int argc, char *argv[]) {
      "Path to feature store")
     ("imgslist,q", po::value<string>()->required(),
      "File with images list")
+    ("port-num,p", po::value<string>()->default_value("5555"),
+     "Port to run the service on")
+    ("seg-img,g", po::value<string>()->default_value(""),
+     "Path to read the segmentation image from. Keep empty for full image search. "
+     "On setting this, system will pool features from bg boxes")
     ;
 
   po::variables_map vm;
@@ -78,17 +82,14 @@ main(int argc, char *argv[]) {
   fs::path MODEL_PATH = 
     fs::path(vm["model-path"].as<string>());
   string LAYER = vm["layer"].as<string>();
+  fs::path SEG_IMG_PATH = fs::path(vm["seg-img"].as<string>());
+  vector<string> layers = {LAYER};
   vector<fs::path> imgslist;
   readList(vm["imgslist"].as<string>(), imgslist);
 
-  NetParameter test_net_params;
-  ReadProtoFromTextFile(NETWORK_PATH.string(), &test_net_params);
-  Net<float> caffe_test_net(test_net_params);
-  NetParameter trained_net_param;
-  ReadProtoFromBinaryFile(MODEL_PATH.string(), &trained_net_param);
-  caffe_test_net.CopyTrainedLayersFrom(trained_net_param);
+  Net<float> caffe_test_net(NETWORK_PATH.string(), caffe::TEST);
+  caffe_test_net.CopyTrainedLayersFrom(MODEL_PATH.string());
   int BATCH_SIZE = caffe_test_net.blob_by_name("data")->num();
-
   
   // Read the search index
   LOG(INFO) << "Reading the search index...";
@@ -106,7 +107,8 @@ main(int argc, char *argv[]) {
   //  Socket to talk to clients
   void *context = zmq_ctx_new();
   void *responder = zmq_socket(context, ZMQ_REP);
-  int rc = zmq_bind(responder, "tcp://*:5555");
+  int rc = zmq_bind(responder, (string("tcp://*:")
+        + vm["port-num"].as<string>()).c_str());
   assert (rc == 0);
 
   LOG(INFO) << "Server Ready";
@@ -126,23 +128,35 @@ main(int argc, char *argv[]) {
       zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
       continue;
     }
+
     vector<Rect> bboxes;
-    bboxes.push_back(Rect(0, 0, I.cols, I.rows)); // full image
-    resize(I, I, Size(256, 256));
-    Is.push_back(I);
+    if (SEG_IMG_PATH.string().length() > 0) {
+      Mat S; // not really used
+      CNNFeatureUtils::genSlidingWindows(I.size(), bboxes);
+      CNNFeatureUtils::pruneBboxesWithSeg(I.size(), SEG_IMG_PATH, bboxes, S);
+    } else {
+      bboxes.push_back(Rect(0, 0, I.cols, I.rows)); // full image
+    }
+
+    for (int i = 0; i < bboxes.size(); i++) {
+      Mat Itemp = I(bboxes[i]);
+      resize(Itemp, Itemp, Size(256, 256));
+      Is.push_back(Itemp);
+    }
 
     high_resolution_clock::time_point read = high_resolution_clock::now();
 
-    vector<vector<float>> feats;
-    computeFeatures<float>(caffe_test_net, Is, LAYER, BATCH_SIZE, feats);
-    l2NormalizeFeatures(feats);
+    vector<vector<vector<float>>> feats;
+    CNNFeatureUtils::computeFeaturesPipeline<float>(caffe_test_net, Is, 
+        layers, BATCH_SIZE, feats, true, "avg", true);
 
     high_resolution_clock::time_point feat = high_resolution_clock::now();
 
     unordered_set<long long int> init_matches;
     vector<pair<float, long long int>> res;
-    l->search(feats[0], init_matches);
-    Resorter::resort_multicore(init_matches, featstor, feats[0], res);
+    l->search(feats[0][0], init_matches);
+    LOG(INFO) << "Re-sorting " << init_matches.size() << " matches";
+    Resorter::resort_multicore(init_matches, featstor, feats[0][0], res);
 
     high_resolution_clock::time_point search = high_resolution_clock::now();
 
