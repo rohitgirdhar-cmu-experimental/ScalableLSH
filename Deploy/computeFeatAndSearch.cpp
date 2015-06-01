@@ -13,6 +13,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp> // for to_lower
 #include <boost/archive/binary_oarchive.hpp>
+#include <errno.h>
 #include "caffe/caffe.hpp"
 #include "utils.hpp"
 // from the search code
@@ -22,6 +23,7 @@
 #include <zmq.h>
 
 #define MAXFEATPERIMG 10000
+#define TMP_PATH "/tmp/temp-img.jpg"
 
 using namespace std;
 using namespace std::chrono;
@@ -32,6 +34,8 @@ namespace fs = boost::filesystem;
 
 void readFromURL(const string&, Mat&);
 string convertToFname(long long idx, const vector<fs::path>& imgslist);
+string convertToFname_DEPRECATED(long long idx, const vector<fs::path>& imgslist);
+void runSegmentationCode();
 
 int
 main(int argc, char *argv[]) {
@@ -63,6 +67,9 @@ main(int argc, char *argv[]) {
     ("seg-img,g", po::value<string>()->default_value(""),
      "Path to read the segmentation image from. Keep empty for full image search. "
      "On setting this, system will pool features from bg boxes")
+    ("deprecated-model,d", po::bool_switch()->default_value(false),
+     "Set if using a deprecated model, which has images indexed from "
+     "0. In future, all image ids, and box ids are 1 indexed")
     ;
 
   po::variables_map vm;
@@ -83,6 +90,7 @@ main(int argc, char *argv[]) {
     fs::path(vm["model-path"].as<string>());
   string LAYER = vm["layer"].as<string>();
   fs::path SEG_IMG_PATH = fs::path(vm["seg-img"].as<string>());
+  bool DEPRECATED_MODEL = vm["deprecated-model"].as<bool>();
   vector<string> layers = {LAYER};
   vector<fs::path> imgslist;
   readList(vm["imgslist"].as<string>(), imgslist);
@@ -131,6 +139,7 @@ main(int argc, char *argv[]) {
 
     vector<Rect> bboxes;
     if (SEG_IMG_PATH.string().length() > 0) {
+      runSegmentationCode();
       Mat S; // not really used
       CNNFeatureUtils::genSlidingWindows(I.size(), bboxes);
       CNNFeatureUtils::pruneBboxesWithSeg(I.size(), SEG_IMG_PATH, bboxes, S);
@@ -161,7 +170,10 @@ main(int argc, char *argv[]) {
     high_resolution_clock::time_point search = high_resolution_clock::now();
 
     for (int i = 0; i < min(res.size(), (size_t) 20); i++) {
-      oss << res[i].first << ":" << convertToFname(res[i].second, imgslist) << ',';
+      oss << res[i].first << ":" 
+          << (DEPRECATED_MODEL ? convertToFname_DEPRECATED(res[i].second, imgslist)
+                               : convertToFname(res[i].second, imgslist)) 
+          << ',';
     }
     zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
     LOG(INFO) << "Time taken: " << endl
@@ -173,12 +185,34 @@ main(int argc, char *argv[]) {
 }
 
 void readFromURL(const string& url, Mat& I) {
-  string temppath = "/tmp/temp-img.jpg";
+  string temppath = TMP_PATH;
   system((string("wget ") + url + " -O " + temppath).c_str());
   I = imread(temppath.c_str());
 }
 
 string convertToFname(long long idx, const vector<fs::path>& imgslist) {
   return imgslist[idx / MAXFEATPERIMG - 1].filename().string();
+}
+
+string convertToFname_DEPRECATED(long long idx, const vector<fs::path>& imgslist) {
+  return imgslist[idx / MAXFEATPERIMG].filename().string();
+}
+
+void runSegmentationCode() {
+  static bool initializedSocket = false;
+  static void *context = NULL;
+  static void *socket = NULL;
+  if (!initializedSocket) {
+    context = zmq_ctx_new();
+    socket = zmq_socket(context, ZMQ_REQ);
+    if (zmq_connect(socket, "tcp://localhost:5556") == -1) {
+      LOG(ERROR) << "Unable to connect to segmentation service. " << strerror(errno);
+    }
+    initializedSocket = true;
+  }
+  zmq_send(socket, (string(TMP_PATH) + "\0").c_str(), strlen(TMP_PATH) + 1, 0);
+  char temp[1000];
+  zmq_recv(socket, temp, 1000, 0); // wait till answer received
+  LOG(ERROR) << temp;
 }
 
