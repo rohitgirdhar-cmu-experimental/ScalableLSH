@@ -6,4 +6,4 @@ GLOG_logtostderr=1 ../computeFeatAndSearch.bin \
     -l pool5 \
     -i /home/rgirdhar/memexdata/Dataset/processed/0002_BackpageComplete/Search/indexes/fullImg_270bit.index \
     -s /home/rgirdhar/memexdata/Dataset/processed/0002_BackpageComplete/Features/CNN/pool5_normed \
-    --imgslist /home/rgirdhar/memexdata/Dataset/processed/0002_BackpageComplete/Images/lists/Images_nospaces.txt
+    --imgslist /home/rgirdhar/memexdata/Dataset/processed/0002_BackpageComplete/Images/lists/Images.txt

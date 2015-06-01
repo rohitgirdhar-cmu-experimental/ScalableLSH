@@ -93,7 +93,7 @@ main(int argc, char *argv[]) {
   bool DEPRECATED_MODEL = vm["deprecated-model"].as<bool>();
   vector<string> layers = {LAYER};
   vector<fs::path> imgslist;
-  readList(vm["imgslist"].as<string>(), imgslist);
+  CNNFeatureUtils::readList_withSpaces(vm["imgslist"].as<string>(), imgslist);
 
   Net<float> caffe_test_net(NETWORK_PATH.string(), caffe::TEST);
   caffe_test_net.CopyTrainedLayersFrom(MODEL_PATH.string());
@@ -186,7 +186,7 @@ main(int argc, char *argv[]) {
 
 void readFromURL(const string& url, Mat& I) {
   string temppath = TMP_PATH;
-  system((string("wget ") + url + " -O " + temppath).c_str());
+  system((string("wget --no-check-certificate ") + url + " -O " + temppath).c_str());
   I = imread(temppath.c_str());
 }
 
