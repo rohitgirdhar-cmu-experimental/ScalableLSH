@@ -2,8 +2,8 @@ import zmq
 import json
 
 class a_POST_handler:
-  def __init__(self,a_number):
-    self.number=a_number
+  def __init__(self,a_service_port):
+    self.service_port=a_service_port
 
   def post(self,request_handler):
 	# check request headers
@@ -39,7 +39,7 @@ class a_POST_handler:
   def retrieveMatches(self, text):
         context = zmq.Context()
         socket = context.socket(zmq.REQ)
-        socket.connect("tcp://localhost:5555")
+        socket.connect("tcp://localhost:" + str(self.service_port))
         # strings must be null-delimited (C style)
         socket.send(text + "\0")
         message = socket.recv()

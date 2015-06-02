@@ -14,13 +14,14 @@ class CMU_Generic_Handler( BaseHTTPServer.BaseHTTPRequestHandler ):
     def do_POST( self ):
         try:
           response = self.response_handler.post(self)
-        except: # catch *all* exceptions
+        except Exception, exc : # catch *all* exceptions
           e = sys.exc_info()[0]
+          print exc
           self.send_error(599,"Internal Error: %s" % e)
 
-def run(handler_class=CMU_Generic_Handler, server_address = ('', 8888), ):
+def run(handler_class=CMU_Generic_Handler, server_address = ('', 8888), service_port = 5555):
     print 'Loading resources...'
-    MyPostHandler = ExamplePOSThandler.a_POST_handler(3) # initialize response handler class here
+    MyPostHandler = ExamplePOSThandler.a_POST_handler(service_port) # initialize response handler class here
     handler_class.response_handler = MyPostHandler
     srvr = ThreadedHTTPServer(server_address, handler_class)
     print 'Launching server...'
@@ -30,4 +31,10 @@ def run(handler_class=CMU_Generic_Handler, server_address = ('', 8888), ):
         srvr.socket.close()
 
 if __name__ == "__main__":
-    run()
+    if sys.argv[1] == 'full':
+      run_on_port = 8888
+      service_port = 5555
+    elif sys.argv[1] == 'bg':
+      run_on_port = 8890
+      service_port = 5557
+    run(server_address = ('', run_on_port), service_port = service_port)
