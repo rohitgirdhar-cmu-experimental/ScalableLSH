@@ -16,6 +16,8 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 long long getIndex(long long, int); // both must be 1 indexed
+long long getIndex_DEPRECATED(long long, int); // both must be 1 indexed
+void readUniqueList(const fs::path& fpath, vector<int>& imgIds);
 
 int main(int argc, char* argv[]) {
   
@@ -43,6 +45,13 @@ int main(int argc, char* argv[]) {
      "Time after which to snapshot the model (seconds)")
     ("printafter", po::value<int>()->default_value(5), // every 5 seconds
      "Time after which to print output (seconds)")
+    ("deprecated-stor", po::bool_switch()->default_value(false),
+     "The data store being used is using the deprecated naming, "
+     "i.e. 0 indexed imids and featids. Note that the model generated "
+     "will still use 1 indexed")
+    ("duplist", po::value<fs::path>()->default_value(""),
+     "Path to list with unique/duplicate entries. Will build index "
+     "only for entries which start with 'U'")
     ;
 
   po::variables_map vm;
@@ -61,6 +70,7 @@ int main(int argc, char* argv[]) {
   // read the list of images to hash
   int saveafter = vm["saveafter"].as<int>();
   int printafter = vm["printafter"].as<int>();
+  bool deprecated_stor = vm["deprecated-stor"].as<bool>();
   vector<fs::path> imgslst;
   readList(vm["imgslist"].as<string>(), imgslst);
   vector<int> featcounts(imgslst.size(), 1); // default: 1 feat/image
@@ -71,6 +81,8 @@ int main(int argc, char* argv[]) {
   vector<int> imgComputeIds;
   if (vm["ids2compute4"].as<string>().length() > 0) {
     readList(vm["ids2compute4"].as<string>(), imgComputeIds);
+  } else if (vm["duplist"].as<fs::path>().string().length() > 0) {
+    readUniqueList(vm["duplist"].as<fs::path>(), imgComputeIds);
   } else {
     // all images
     for (int i = 1; i <= imgslst.size(); i++) {
@@ -98,7 +110,12 @@ int main(int argc, char* argv[]) {
   for (int meta_i = 0; meta_i < imgComputeIds.size(); meta_i++) {
     int i = imgComputeIds[meta_i] - 1; // hash this image
     for (int j = 0; j < featcounts[i]; j++) {
-      long long idx = getIndex(i+1, j+1);
+      long long idx;
+      if (deprecated_stor) {
+        idx = getIndex_DEPRECATED(i+1, j+1);
+      } else {
+        idx = getIndex(i+1, j+1);
+      }
       if (l->lastLabelInserted >= idx) {
         continue;
       }
@@ -140,5 +157,23 @@ int main(int argc, char* argv[]) {
 
 long long getIndex(long long imid, int pos) { // imid and pos must be 1 indexed
   return imid * MAXFEATPERIMG + pos;
+}
+
+long long getIndex_DEPRECATED(long long imid, int pos) { // imid and pos must be 1 indexed
+  return (imid - 1) * MAXFEATPERIMG + (pos - 1);
+}
+
+void readUniqueList(const fs::path& fpath, vector<int>& imgIds) {
+  imgIds.clear();
+  ifstream fin(fpath.string());
+  string line;
+  int lno = 1;
+  while (getline(fin, line)) {
+    if (line[0] == 'U') {
+      imgIds.push_back(lno);
+    }
+    lno++;
+  }
+  fin.close();
 }
 

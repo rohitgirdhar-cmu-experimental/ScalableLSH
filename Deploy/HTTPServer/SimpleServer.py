@@ -32,9 +32,9 @@ def run(handler_class=CMU_Generic_Handler, server_address = ('', 8888), service_
 
 if __name__ == "__main__":
     if sys.argv[1] == 'full':
-      run_on_port = 8888
+      run_on_port = 8889
       service_port = 5555
     elif sys.argv[1] == 'bg':
-      run_on_port = 8890
+      run_on_port = 8891
       service_port = 5557
     run(server_address = ('', run_on_port), service_port = service_port)

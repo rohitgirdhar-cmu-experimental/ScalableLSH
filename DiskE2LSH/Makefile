@@ -3,9 +3,9 @@ LDFLAGS += -lleveldb -lboost_serialization -lboost_system -lboost_program_option
 LIBS += -L ~/Software/utils/leveldb/ -L /home/rgirdhar/data/Software/cpp/boost_1_57_0/stage/lib/
 INC += -I ~/Software/utils/leveldb/include/ -I /home/rgirdhar/data/Software/cpp/boost_1_57_0/ -I Eigen/
 
-all: main.bin buildIndex.bin buildDiskIndex.bin
+all: main.bin buildIndex.bin buildDiskIndex.bin computePairwiseSim.bin
 
-%.bin: %.cpp storage/DiskVector.hpp LSHFunc.hpp Table.hpp Resorter.hpp Makefile LSH.hpp
+%.bin: %.cpp storage/DiskVector.hpp LSHFunc.hpp Table.hpp Resorter.hpp Makefile LSH.hpp config.hpp storage/DiskVectorLMDB.hpp
 	$(CXX) $(CPPFLAGS) $(INC) $< -o $@ $(LIBS) $(LDFLAGS)
 
 clean:

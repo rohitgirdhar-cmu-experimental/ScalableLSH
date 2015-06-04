@@ -171,6 +171,7 @@ int main(int argc, char* argv[]) {
         }
       }
 
+      high_resolution_clock::time_point last_print = high_resolution_clock::now();
       for (int meta_j = 0; meta_j < boxes2run4.size(); meta_j++) {
         int j = boxes2run4[meta_j] - 1; // 0 indexed j
         if (allres[j].size() > 0) {
@@ -214,10 +215,13 @@ int main(int argc, char* argv[]) {
         allres[j] = vector<pair<float, long long int>>(res.begin(), 
             min(res.begin() + vm["topk"].as<int>(), res.end()));
         high_resolution_clock::time_point t2 = high_resolution_clock::now();
-        auto duration = duration_cast<milliseconds>(t2 - t1).count();
-        cout << "Search done for " << qlist[i] << ":" << j << " in " << duration 
-             << " ms (re-ranked: " << temp.size() << ")" << endl;
-        cout.flush();
+        if (duration_cast<seconds>(t2 - last_print).count() >= 2) {
+          auto duration = duration_cast<milliseconds>(t2 - t1).count();
+          cout << "Search done for " << qlist[i] << ":" << j << " in " << duration 
+               << " ms (re-ranked: " << temp.size() << ")" << endl;
+          cout.flush();
+          last_print = t2;
+        }
       }
       ofstream fout(fpath.string());
       for (auto res = allres.begin(); res != allres.end(); res++) {
