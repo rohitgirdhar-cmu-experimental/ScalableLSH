@@ -90,5 +90,45 @@ int computeFeatId(int imgid, int featid) {
   return imgid * MAXFEATPERIMG + featid;
 }
 
+void readDupFileMatches(const fs::path& fpath,
+    map<long long, vector<long long>>& matches) {
+  matches.clear();
+  ifstream fin(fpath.string().c_str());
+  string line;
+  int lno = 0;
+  while (getline(fin, line)) {
+    lno++;
+    if (line[0] == 'U') {
+      istringstream iss(line.substr(2));
+      long long match;
+      long long key = computeFeatId(lno, 1);
+      matches[key] = vector<long long>();
+      while (iss >> match) {
+        matches[key].push_back(computeFeatId(match, 1));
+      }
+    }
+  }
+  fin.close();
+}
+
+vector<pair<float, long long>> augmentWithDuplicates(const fs::path& fpath,
+    const vector<pair<float, long long int>>& res) {
+  static bool loadedDupFile = false;
+  static map<long long, vector<long long>> matches;
+  if (!loadedDupFile) {
+    readDupFileMatches(fpath, matches);
+    loadedDupFile = true;
+    cout << "Read the duplicate images file" << endl;
+  }
+  vector<pair<float, long long int>> finalres;
+  for (int i = 0; i < res.size(); i++) {
+    finalres.push_back(res[i]);
+    for (int j = 0; j < matches[res[i].second].size(); j++) {
+      finalres.push_back(make_pair(res[i].first, matches[res[i].second][j]));
+    }
+  }
+  return finalres;
+}
+
 #endif
 

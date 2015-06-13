@@ -70,6 +70,11 @@ main(int argc, char *argv[]) {
     ("deprecated-model,d", po::bool_switch()->default_value(false),
      "Set if using a deprecated model, which has images indexed from "
      "0. In future, all image ids, and box ids are 1 indexed")
+    ("duplist", po::value<fs::path>()->default_value(""),
+     "Path to list with unique/duplicate entried. Will augment the "
+     "output with duplicate images")
+    ("num-output", po::value<int>()->default_value(100),
+     "Max number of matches to return")
     ;
 
   po::variables_map vm;
@@ -84,7 +89,7 @@ main(int argc, char *argv[]) {
     LOG(ERROR) << e.what();
     return -1;
   }
-  
+ 
   fs::path NETWORK_PATH = fs::path(vm["network-path"].as<string>());
   fs::path MODEL_PATH = 
     fs::path(vm["model-path"].as<string>());
@@ -94,6 +99,7 @@ main(int argc, char *argv[]) {
   vector<string> layers = {LAYER};
   vector<fs::path> imgslist;
   CNNFeatureUtils::readList_withSpaces(vm["imgslist"].as<string>(), imgslist);
+  int num_output = vm["num-output"].as<int>();
 
   Net<float> caffe_test_net(NETWORK_PATH.string(), caffe::TEST);
   caffe_test_net.CopyTrainedLayersFrom(MODEL_PATH.string());
@@ -166,10 +172,13 @@ main(int argc, char *argv[]) {
     l->search(feats[0][0], init_matches);
     LOG(INFO) << "Re-sorting " << init_matches.size() << " matches";
     Resorter::resort_multicore(init_matches, featstor, feats[0][0], res);
+    if (vm["duplist"].as<fs::path>().string().length() > 0) {
+      res = augmentWithDuplicates(vm["duplist"].as<fs::path>(), res);
+    }
 
     high_resolution_clock::time_point search = high_resolution_clock::now();
 
-    for (int i = 0; i < min(res.size(), (size_t) 20); i++) {
+    for (int i = 0; i < min(res.size(), (size_t) num_output); i++) {
       oss << res[i].first << ":" 
           << (DEPRECATED_MODEL ? convertToFname_DEPRECATED(res[i].second, imgslist)
                                : convertToFname(res[i].second, imgslist)) 
