@@ -23,7 +23,7 @@
 #include <zmq.h>
 
 #define MAXFEATPERIMG 10000
-#define TMP_PATH "/tmp/temp-img.jpg"
+#define TMP_PATH "./temp-dir/temp-img.jpg" // MUST EXIST
 
 using namespace std;
 using namespace std::chrono;
@@ -174,6 +174,7 @@ main(int argc, char *argv[]) {
     Resorter::resort_multicore(init_matches, featstor, feats[0][0], res);
     if (vm["duplist"].as<fs::path>().string().length() > 0) {
       res = augmentWithDuplicates(vm["duplist"].as<fs::path>(), res);
+      LOG(INFO) << "Augmented to get " << res.size() << " matches";
     }
 
     high_resolution_clock::time_point search = high_resolution_clock::now();
