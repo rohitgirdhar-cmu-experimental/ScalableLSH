@@ -32,7 +32,7 @@ using namespace cv;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-void readFromURL(const string&, Mat&);
+int readFromURL(const string&, Mat&);
 string convertToFname(long long idx, const vector<fs::path>& imgslist);
 string convertToFname_DEPRECATED(long long idx, const vector<fs::path>& imgslist);
 void runSegmentationCode();
@@ -136,8 +136,8 @@ main(int argc, char *argv[]) {
 
     vector<Mat> Is;
     Mat I;
-    readFromURL(string(buffer), I);
-    if (!I.data) {
+    int ret_value = readFromURL(string(buffer), I);
+    if (!I.data || ret_value != 0) {
       oss << "Unable to read " << buffer;
       zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
       continue;
@@ -194,10 +194,11 @@ main(int argc, char *argv[]) {
   return 0;
 }
 
-void readFromURL(const string& url, Mat& I) {
+int readFromURL(const string& url, Mat& I) {
   string temppath = TMP_PATH;
-  system((string("wget --no-check-certificate ") + url + " -O " + temppath).c_str());
+  int ret = system((string("wget --no-check-certificate ") + url + " -O " + temppath).c_str());
   I = imread(temppath.c_str());
+  return ret;
 }
 
 string convertToFname(long long idx, const vector<fs::path>& imgslist) {
