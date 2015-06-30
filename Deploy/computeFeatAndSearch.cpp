@@ -221,7 +221,9 @@ void runSegmentationCode() {
     }
     initializedSocket = true;
   }
-  zmq_send(socket, ((boost::filesystem::canonical(TMP_PATH)).string() + "\0").c_str(), strlen(TMP_PATH) + 1, 0);
+  string path_to_send = boost::filesystem::canonical(fs::path(TMP_PATH)).string() + "\0";
+  cout << "sedning : " << path_to_send;
+  zmq_send(socket, path_to_send.c_str(), path_to_send.length(), 0);
   char temp[1000];
   zmq_recv(socket, temp, 1000, 0); // wait till answer received
   LOG(ERROR) << temp;
