@@ -216,12 +216,12 @@ void runSegmentationCode() {
   if (!initializedSocket) {
     context = zmq_ctx_new();
     socket = zmq_socket(context, ZMQ_REQ);
-    if (zmq_connect(socket, "tcp://localhost:5556") == -1) {
+    if (zmq_connect(socket, "tcp://localhost:5559") == -1) {
       LOG(ERROR) << "Unable to connect to segmentation service. " << strerror(errno);
     }
     initializedSocket = true;
   }
-  zmq_send(socket, (string(TMP_PATH) + "\0").c_str(), strlen(TMP_PATH) + 1, 0);
+  zmq_send(socket, ((boost::filesystem::canonical(TMP_PATH)).string() + "\0").c_str(), strlen(TMP_PATH) + 1, 0);
   char temp[1000];
   zmq_recv(socket, temp, 1000, 0); // wait till answer received
   LOG(ERROR) << temp;
