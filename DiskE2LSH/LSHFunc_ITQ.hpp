@@ -16,9 +16,11 @@
 #include <boost/filesystem.hpp>
 #include <cmath>
 #include <functional>
+#include <chrono>
 #include "config.hpp"
 
 using namespace std;
+using namespace std::chrono;
 namespace fs = boost::filesystem;
 
 class LSHFunc_ITQ {
@@ -47,13 +49,18 @@ public:
   }
 
   void learnPCAEmbedding(const Eigen::MatrixXf& data) {
+    cout << "Learning PCA Embedding ... ";
+    cout.flush();
+    high_resolution_clock::time_point start = high_resolution_clock::now();
     Eigen::MatrixXf cov = data.adjoint() * data;
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> eig(cov);
     pc = eig.eigenvectors().rightCols(dim);
+    high_resolution_clock::time_point end = high_resolution_clock::now();
+    cout << "Done in " << duration_cast<seconds>(end - start).count() << "s" << endl;
   }
 
   void pcaEmbed(Eigen::MatrixXf& data) {
-    data  = pc * data;
+    data *= pc;
   }
 
   void genLSHfunc(const vector<vector<float>>& sampleDataAsVec, int nIter) {
@@ -69,10 +76,13 @@ public:
     centerData(sampleData);
     R = Eigen::MatrixXf::Random(dim, dim);
     cout << "Running ITQ Training..." << endl;
+    cout.flush();
     Eigen::JacobiSVD<Eigen::MatrixXf> svd(R);
     R = svd.matrixU().leftCols(dim);
     for (int iter = 0; iter < nIter; iter++) {
-      cout << "Running iteration " << iter << endl;
+      cout << "Running iteration " << iter << " ...";
+      cout.flush();
+      high_resolution_clock::time_point start = high_resolution_clock::now();
       Eigen::MatrixXf Z = sampleData * R;
       Eigen::MatrixXf UX = Eigen::MatrixXf::Zero(Z.rows(), Z.cols()) * (-1);
       for (int i = 0; i < UX.rows(); i++) {
@@ -83,6 +93,9 @@ public:
       Eigen::MatrixXf C = UX.adjoint() * sampleData;
       Eigen::JacobiSVD<Eigen::MatrixXf> svd2(C);
       R = svd2.matrixU() * svd2.matrixV().adjoint();
+      high_resolution_clock::time_point end = high_resolution_clock::now();
+      cout << "Done in " << duration_cast<milliseconds>(end - start).count()
+           << "ms" << endl;
     }
   }
 

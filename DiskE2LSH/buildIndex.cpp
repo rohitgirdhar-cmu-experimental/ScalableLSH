@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
      "Time after which to snapshot the model (seconds)")
     ("printafter", po::value<int>()->default_value(5), // every 5 seconds
      "Time after which to print output (seconds)")
-    ("nTrain", po::value<int>()->default_value(100000), // 100K (8GB) by default
+    ("nTrain", po::value<int>()->default_value(100000), // 100K (8GB pool5) by default
      "Number of random elements from imgComputeIDs to be used to train ITQ. "
      "Note that this mainly depends on the memory available.")
     ("deprecated-stor", po::bool_switch()->default_value(false),
@@ -99,8 +99,6 @@ int main(int argc, char* argv[]) {
   
   DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1);
 
-  vector<vector<float>> trainData;
-  generateTrainData(imgComputeIds, tree, trainData, deprecated_stor, nTrain);
   std::shared_ptr<LSH> l(new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>()));
   if (vm.count("load")) {
     ifstream ifs(vm["load"].as<string>(), ios::binary);
@@ -108,6 +106,9 @@ int main(int argc, char* argv[]) {
     ia >> *l;
     cout << "Loaded the search model for update" << endl;
   } else {
+    vector<vector<float>> trainData;
+    generateTrainData(imgComputeIds, tree, trainData, deprecated_stor, nTrain);
+    cout << "Generated training data. Starting to train..." << endl;
     l->train(trainData);
   }
   vector<float> feat;
