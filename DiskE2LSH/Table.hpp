@@ -1,7 +1,7 @@
 #ifndef TABLE_HPP
 #define TABLE_HPP
 
-#include "LSHFunc.hpp"
+#include "LSHFunc_ITQ.hpp"
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -19,11 +19,14 @@ struct vectorint_hash {
 
 class Table {
   friend class boost::serialization::access;
-  LSHFunc lshFunc;
+  LSHFunc_ITQ lshFunc;
   unordered_map<vector<int>, unordered_set<long long int>, vectorint_hash> index;
 public:
-  Table(int k, int dim) : lshFunc(k, dim) {}
+  Table(int k) : lshFunc(k) {}
   Table() {} // used for serializing
+  void train(const vector<vector<float>>& sampleData) {
+    lshFunc.train(sampleData);
+  }
   void insert(const vector<float>& feat, long long int label) {
     vector<int> hash;
     lshFunc.computeHash(feat, hash);

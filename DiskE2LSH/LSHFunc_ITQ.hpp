@@ -29,13 +29,14 @@ class LSHFunc_ITQ {
   Eigen::MatrixXf pc; // PCA embedding (the top-<dim> eigen vectors
   
 public:
-  LSHFunc_ITQ(const vector<vector<float>>& sampleDataAsVec, 
-      int _k, int nTrainIter = 50): k(_k) {
+  LSHFunc_ITQ(int _k): k(_k) {}
+  LSHFunc_ITQ() {} // used while serializing
+
+  void train(const vector<vector<float>>& sampleDataAsVec, int nTrainIter = 50) {
     assert(sampleDataAsVec.size() > 0);
     dim = sampleDataAsVec[0].size();
     genLSHfunc(sampleDataAsVec, nTrainIter);
   }
-  LSHFunc_ITQ() {} // used while serializing
 
   void computeAndSetCenter(const Eigen::MatrixXf& sampleData) {
     mean = sampleData.colwise().mean();

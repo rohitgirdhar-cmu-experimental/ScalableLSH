@@ -1,5 +1,6 @@
 #include <iostream>
 #include <chrono>
+#include <algorithm>
 #include <boost/program_options.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -18,6 +19,8 @@ namespace po = boost::program_options;
 long long getIndex(long long, int); // both must be 1 indexed
 long long getIndex_DEPRECATED(long long, int); // both must be 1 indexed
 void readUniqueList(const fs::path& fpath, vector<int>& imgIds);
+void generateTrainData(const vector<int>&, const DiskVectorLMDB<vector<float>>&, 
+    vector<vector<float>>&, bool deprecated_stor, int nTrain);
 
 int main(int argc, char* argv[]) {
   
@@ -45,6 +48,9 @@ int main(int argc, char* argv[]) {
      "Time after which to snapshot the model (seconds)")
     ("printafter", po::value<int>()->default_value(5), // every 5 seconds
      "Time after which to print output (seconds)")
+    ("nTrain", po::value<int>()->default_value(100000), // 100K (8GB) by default
+     "Number of random elements from imgComputeIDs to be used to train ITQ. "
+     "Note that this mainly depends on the memory available.")
     ("deprecated-stor", po::bool_switch()->default_value(false),
      "The data store being used is using the deprecated naming, "
      "i.e. 0 indexed imids and featids. Note that the model generated "
@@ -70,6 +76,7 @@ int main(int argc, char* argv[]) {
   // read the list of images to hash
   int saveafter = vm["saveafter"].as<int>();
   int printafter = vm["printafter"].as<int>();
+  int nTrain = vm["nTrain"].as<int>();
   bool deprecated_stor = vm["deprecated-stor"].as<bool>();
   vector<fs::path> imgslst;
   readList(vm["imgslist"].as<string>(), imgslst);
@@ -90,18 +97,23 @@ int main(int argc, char* argv[]) {
     }
   }
   
-  std::shared_ptr<LSH> l(new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>(), 9216));
+  DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1);
+
+  vector<vector<float>> trainData;
+  generateTrainData(imgComputeIds, tree, trainData, deprecated_stor, nTrain);
+  std::shared_ptr<LSH> l(new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>()));
   if (vm.count("load")) {
     ifstream ifs(vm["load"].as<string>(), ios::binary);
     boost::archive::binary_iarchive ia(ifs);
     ia >> *l;
     cout << "Loaded the search model for update" << endl;
+  } else {
+    l->train(trainData);
   }
   vector<float> feat;
   
   high_resolution_clock::time_point last_print, last_save;
   last_print = last_save = high_resolution_clock::now();
-  DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1);
 
   if (l->lastLabelInserted >= 0) {
     cout << "Ignoring uptil (and including) " << l->lastLabelInserted 
@@ -177,3 +189,26 @@ void readUniqueList(const fs::path& fpath, vector<int>& imgIds) {
   fin.close();
 }
 
+void generateTrainData(const vector<int>& imgComputeIds,
+    const DiskVectorLMDB<vector<float>>& tree, vector<vector<float>>& outputTrainData,
+    bool deprecated_stor, int nTrain) {
+  // select randomly nTrain elements from imgComputeIds and push into trainIDs
+  // TODO (rgirdhar): Note that this only takes the top (1) window from each image.
+  // So, for multiple windows, it misses everything else. In future, fix this. 
+  // Ideally, randomly select over all windows.
+  // It was implemented this way for the full image indexes first.
+  nTrain = min(nTrain, (int) imgComputeIds.size());
+  vector<int> sel = imgComputeIds;
+  random_shuffle(sel.begin(), sel.end());
+  for (int i = 0; i < nTrain; i++) {
+    long long imid;
+    if (deprecated_stor) {
+      imid = getIndex_DEPRECATED(sel[i], 1);
+    } else {
+      imid = getIndex(sel[i], 1);
+    }
+    vector<float> feat;
+    tree.Get(imid, feat);
+    outputTrainData.push_back(feat);
+  }
+}
