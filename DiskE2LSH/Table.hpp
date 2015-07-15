@@ -24,7 +24,8 @@ class Table {
 public:
   Table(int k) : lshFunc(k) {}
   Table() {} // used for serializing
-  void train(const vector<vector<float>>& sampleData) {
+  template <typename T>
+  void train(const vector<vector<T>>& sampleData) {
     lshFunc.train(sampleData);
   }
   void insert(const vector<float>& feat, long long int label) {

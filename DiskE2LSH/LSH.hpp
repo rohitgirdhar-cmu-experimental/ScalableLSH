@@ -16,7 +16,8 @@ public:
     }
     lastLabelInserted = -1;
   }
-  void train(const vector<vector<float>>& sampleData) {
+  template <typename T>
+  void train(const vector<vector<T>>& sampleData) {
     if (tables.size() > 1) {
       // TODO (rgirdhar): Allow multiple tables to be trained using 
       // different randomly selected sets of data. Until then,
