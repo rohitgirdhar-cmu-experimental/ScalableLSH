@@ -35,6 +35,14 @@ public:
   LSHFunc_ITQ() {} // used while serializing
 
   void train(const vector<vector<float>>& sampleDataAsVec, int nTrainIter = 50) {
+    /*
+    // TODO: REMOVE, only for debugging
+    vector<vector<float>> sampleDataAsVec2 = sampleDataAsVec;
+    for (int i = 0; i < sampleDataAsVec.size(); i++) {
+      sampleDataAsVec2[i].erase(sampleDataAsVec2[i].begin() + 9216, sampleDataAsVec2[i].end());
+    }
+    ///////////////////////////////////
+    */
     assert(sampleDataAsVec.size() > 0);
     dim = sampleDataAsVec[0].size();
     genLSHfunc(sampleDataAsVec, nTrainIter);
@@ -69,7 +77,7 @@ public:
     for (int i = 0; i < sampleDataAsVec.size(); i++) {
       sampleData.row(i) = Eigen::VectorXf::Map(&sampleDataAsVec[i][0], sampleDataAsVec[i].size());
     }
-    // directly translated Guo's code
+    // directly translated Gong's code
     learnPCAEmbedding(sampleData);
     pcaEmbed(sampleData);
     computeAndSetCenter(sampleData);
@@ -77,22 +85,23 @@ public:
     R = Eigen::MatrixXf::Random(dim, dim);
     cout << "Running ITQ Training..." << endl;
     cout.flush();
-    Eigen::JacobiSVD<Eigen::MatrixXf> svd(R);
+    //Eigen::JacobiSVD<Eigen::MatrixXf> svd(R);
+    Eigen::BDCSVD<Eigen::MatrixXf> svd(R, Eigen::ComputeThinU | Eigen::ComputeThinV);
     R = svd.matrixU().leftCols(dim);
     for (int iter = 0; iter < nIter; iter++) {
       cout << "Running iteration " << iter << " ...";
       cout.flush();
       high_resolution_clock::time_point start = high_resolution_clock::now();
       Eigen::MatrixXf Z = sampleData * R;
-      Eigen::MatrixXf UX = Eigen::MatrixXf::Zero(Z.rows(), Z.cols()) * (-1);
+      Eigen::MatrixXf UX = Eigen::MatrixXf::Ones(Z.rows(), Z.cols()) * (-1);
       for (int i = 0; i < UX.rows(); i++) {
         for (int j = 0; j < UX.cols(); j++) {
-          UX(i, j) = Z(i, j) > 0 ? 1 : 0;
+          UX(i, j) = Z(i, j) >= 0 ? 1 : -1;
         }
       }
       Eigen::MatrixXf C = UX.adjoint() * sampleData;
-      Eigen::JacobiSVD<Eigen::MatrixXf> svd2(C);
-      R = svd2.matrixU() * svd2.matrixV().adjoint();
+      Eigen::BDCSVD<Eigen::MatrixXf> svd2(C, Eigen::ComputeThinU | Eigen::ComputeThinV);
+      R = svd2.matrixV() * svd2.matrixU().adjoint();
       high_resolution_clock::time_point end = high_resolution_clock::now();
       cout << "Done in " << duration_cast<minutes>(end - start).count()
            << "min" << endl;
