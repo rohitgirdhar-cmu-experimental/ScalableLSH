@@ -11,16 +11,10 @@
 #include <boost/serialization/unordered_set.hpp>
 #include <boost/functional/hash.hpp>
 
-struct vectorint_hash {
-  std::size_t operator()(vector<int> const& c) const {
-    return boost::hash_range(c.begin(), c.end());
-  }
-};
-
 class Table {
   friend class boost::serialization::access;
   LSHFunc_ITQ lshFunc;
-  unordered_map<vector<int>, unordered_set<long long int>, vectorint_hash> index;
+  unordered_map<vector<bool>, unordered_set<long long int>, hash<vector<bool>>> index;
 public:
   Table(int k) : lshFunc(k) {}
   Table() {} // used for serializing
@@ -29,7 +23,7 @@ public:
     lshFunc.train(sampleData);
   }
   void insert(const vector<float>& feat, long long int label) {
-    vector<int> hash;
+    vector<bool> hash;
     lshFunc.computeHash(feat, hash);
 
     auto pos = index.find(hash);
@@ -42,7 +36,7 @@ public:
     }
   }
   bool search(const vector<float>& feat, unordered_set<long long int>& output) const {
-    vector<int> hash;
+    vector<bool> hash;
     lshFunc.computeHash(feat, hash);
     auto pos = index.find(hash);
     if (pos != index.end()) {

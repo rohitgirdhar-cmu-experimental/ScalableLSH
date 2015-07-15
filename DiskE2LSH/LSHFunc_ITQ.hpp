@@ -24,14 +24,14 @@ using namespace std::chrono;
 namespace fs = boost::filesystem;
 
 class LSHFunc_ITQ {
-  int k; // number of bits in a function (length of key)
+  int nbits; // number of bits in a function (length of key)
   int dim; // dimension of features
   Eigen::VectorXf mean; // for centering the data
   Eigen::MatrixXf R; // rotation matrix (ITQ)
   Eigen::MatrixXf pc; // PCA embedding (the top-<dim> eigen vectors
   
 public:
-  LSHFunc_ITQ(int _k): k(_k) {}
+  LSHFunc_ITQ(int _nbits): nbits(_nbits) {}
   LSHFunc_ITQ() {} // used while serializing
 
   void train(const vector<vector<float>>& sampleDataAsVec, int nTrainIter = 50) {
@@ -52,7 +52,7 @@ public:
     mean = sampleData.colwise().mean();
   }
 
-  void centerData(Eigen::MatrixXf& data) {
+  void centerData(Eigen::MatrixXf& data) const {
     data = data.rowwise() - mean.adjoint();
   }
 
@@ -62,12 +62,16 @@ public:
     cout.flush();
     Eigen::MatrixXf cov = data.adjoint() * data;
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> eig(cov);
-    pc = eig.eigenvectors().rightCols(dim);
+    pc = eig.eigenvectors().rightCols(nbits);
     high_resolution_clock::time_point end = high_resolution_clock::now();
     cout << "Done in " << duration_cast<minutes>(end - start).count() << "min" << endl;
   }
 
-  void pcaEmbed(Eigen::MatrixXf& data) {
+  void pcaEmbed(Eigen::MatrixXf& data) const {
+    data *= pc;
+  }
+  
+  void pcaEmbed(Eigen::VectorXf& data) const {
     data *= pc;
   }
 
@@ -82,12 +86,11 @@ public:
     pcaEmbed(sampleData);
     computeAndSetCenter(sampleData);
     centerData(sampleData);
-    R = Eigen::MatrixXf::Random(dim, dim);
+    R = Eigen::MatrixXf::Random(nbits, nbits);
     cout << "Running ITQ Training..." << endl;
     cout.flush();
-    //Eigen::JacobiSVD<Eigen::MatrixXf> svd(R);
-    Eigen::BDCSVD<Eigen::MatrixXf> svd(R, Eigen::ComputeThinU | Eigen::ComputeThinV);
-    R = svd.matrixU().leftCols(dim);
+    Eigen::JacobiSVD<Eigen::MatrixXf> svd(R, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    R = svd.matrixU().leftCols(nbits);
     for (int iter = 0; iter < nIter; iter++) {
       cout << "Running iteration " << iter << " ...";
       cout.flush();
@@ -103,32 +106,31 @@ public:
       Eigen::BDCSVD<Eigen::MatrixXf> svd2(C, Eigen::ComputeThinU | Eigen::ComputeThinV);
       R = svd2.matrixV() * svd2.matrixU().adjoint();
       high_resolution_clock::time_point end = high_resolution_clock::now();
-      cout << "Done in " << duration_cast<minutes>(end - start).count()
-           << "min" << endl;
+      cout << "Done in " << duration_cast<seconds>(end - start).count()
+           << "sec" << endl;
     }
   }
 
-  void computeHash(const vector<float>& _feat, vector<int>& hash) const {
-    return;
-    /*
+  void computeHash(const vector<float>& _feat, vector<bool>& hash) const {
     if (_feat.size() == 0) {
       return;
     }
     hash.clear();
-    Eigen::MatrixXf feat = Eigen::VectorXf::Map(&_feat[0], _feat.size());
+    Eigen::VectorXf feat = Eigen::VectorXf::Map(&_feat[0], _feat.size());
     #if NORMALIZE_FEATS == 1
       feat = feat / feat.norm(); // normalize the feature
     #endif
-    Eigen::MatrixXf res = (feat.transpose() * A - b.replicate(feat.cols(), 1)) / w;
-    for (int i = 0; i < res.size(); i++) {
-      hash.push_back((int) floor(res(i)));
+    Eigen::VectorXf res = feat; // to overcome the const
+    pcaEmbed(res);
+    res = res * R;
+    for (int i = 0; i < res.cols(); i++) {
+      hash.push_back(res(i) > 0 ? true : false);
     }
-    */
   }
 
   template<class Archive>
   void serialize(Archive &ar, const unsigned int version) {
-    ar & k;
+    ar & nbits;
     ar & dim;
     ar & mean;
     ar & pc;
