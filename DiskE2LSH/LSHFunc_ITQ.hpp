@@ -49,14 +49,14 @@ public:
   }
 
   void learnPCAEmbedding(const Eigen::MatrixXf& data) {
+    high_resolution_clock::time_point start = high_resolution_clock::now();
     cout << "Learning PCA Embedding ... ";
     cout.flush();
-    high_resolution_clock::time_point start = high_resolution_clock::now();
     Eigen::MatrixXf cov = data.adjoint() * data;
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> eig(cov);
     pc = eig.eigenvectors().rightCols(dim);
     high_resolution_clock::time_point end = high_resolution_clock::now();
-    cout << "Done in " << duration_cast<seconds>(end - start).count() << "s" << endl;
+    cout << "Done in " << duration_cast<minutes>(end - start).count() << "min" << endl;
   }
 
   void pcaEmbed(Eigen::MatrixXf& data) {
@@ -94,8 +94,8 @@ public:
       Eigen::JacobiSVD<Eigen::MatrixXf> svd2(C);
       R = svd2.matrixU() * svd2.matrixV().adjoint();
       high_resolution_clock::time_point end = high_resolution_clock::now();
-      cout << "Done in " << duration_cast<milliseconds>(end - start).count()
-           << "ms" << endl;
+      cout << "Done in " << duration_cast<minutes>(end - start).count()
+           << "min" << endl;
     }
   }
 
