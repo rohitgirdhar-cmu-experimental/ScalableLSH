@@ -15,7 +15,7 @@ INC += -I$(CAFFE_ROOT)/include/ -I$(CAFFE_ROOT)/build/src/ -I/usr/local/include/
 INC += -I$(FEAT_EXT_CODE_ROOT)
 
 # for the search code
-SEARCH_CODE_PATH=/home/rgirdhar/data/Work/Code/0002_Retrieval/ScalableLSH/DiskE2LSH
+SEARCH_CODE_PATH=../DiskE2LSH
 INC += -I$(SEARCH_CODE_PATH) -I$(SEARCH_CODE_PATH)/Eigen
 
 # for the zmq

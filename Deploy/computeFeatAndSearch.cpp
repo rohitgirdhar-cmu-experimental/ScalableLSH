@@ -109,7 +109,7 @@ main(int argc, char *argv[]) {
   LOG(INFO) << "Reading the search index...";
   ifstream ifs(vm["index"].as<string>(), ios::binary);
   boost::archive::binary_iarchive ia(ifs);
-  std::shared_ptr<LSH> l(new LSH(0,0,0));
+  std::shared_ptr<LSH> l(new LSH(0,0));
   ia >> *l;
   ifs.close();
   LOG(INFO) << "Done.";
