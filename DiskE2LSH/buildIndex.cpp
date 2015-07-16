@@ -4,6 +4,7 @@
 #include <boost/program_options.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
+#include <glog/logging.h>
 #include "storage/DiskVectorLMDB.hpp"
 #include "LSH.hpp"
 #include "Resorter.hpp"
@@ -23,7 +24,7 @@ void generateTrainData(const vector<int>&, const DiskVectorLMDB<vector<float>>&,
     vector<vector<float>>&, bool deprecated_stor, int nTrain);
 
 int main(int argc, char* argv[]) {
-  
+  google::InitGoogleLogging(argv[0]);  
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help,h", "Show this help")
@@ -108,7 +109,8 @@ int main(int argc, char* argv[]) {
   } else {
     vector<vector<float>> trainData;
     generateTrainData(imgComputeIds, tree, trainData, deprecated_stor, nTrain);
-    cout << "Generated training data. Starting to train..." << endl;
+    cout << "Generated " << trainData.size() 
+         << " training data. Starting to train..." << endl;
     l->train(trainData);
   }
   vector<float> feat;
