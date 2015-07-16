@@ -38,11 +38,11 @@ public:
   }
   void search(const vector<float>& feat, unordered_set<long long int>& output) const {
     output.clear();
-    #pragma omp parallel for
+//    #pragma omp parallel for
     for (int i = 0; i < tables.size(); i++) {
       unordered_set<long long int> part;
       tables[i].search(feat, part);
-      #pragma omp critical
+//      #pragma omp critical
       output.insert(part.begin(), part.end());
     }
   }

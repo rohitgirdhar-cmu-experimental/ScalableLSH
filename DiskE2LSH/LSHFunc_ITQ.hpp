@@ -118,7 +118,6 @@ public:
     if (_feat.size() == 0) {
       return hash; // all 0s!
     }
-    hash.clear();
     Eigen::VectorXf feat = Eigen::VectorXf::Map(&_feat[0], _feat.size());
     #if NORMALIZE_FEATS == 1
       feat = feat / feat.norm(); // normalize the feature
@@ -126,7 +125,7 @@ public:
     pcaEmbed(feat);
     Eigen::VectorXf res = feat.adjoint() * R;
     for (unsigned i = 0; i < res.rows(); i++) {
-      hash[i] = res(i) > 0 ? true : false;
+      hash[i] = res(i) > 0 ? 1 : 0;
     }
     return hash;
   }
