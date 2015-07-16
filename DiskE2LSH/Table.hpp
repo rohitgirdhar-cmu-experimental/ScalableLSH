@@ -7,6 +7,7 @@
 #define BOOST_DYNAMIC_BITSET_DONT_USE_FRIENDS
 
 #include "LSHFunc_ITQ.hpp"
+#include "utils.hpp"
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
@@ -28,6 +29,7 @@ class Table {
   friend class boost::serialization::access;
   LSHFunc_ITQ lshFunc;
   unordered_map<boost::dynamic_bitset<>, unordered_set<long long>, dynbitset_hash> index;
+  vector<boost::dynamic_bitset<>> indexKeys; // maintain keys to above map, for fast hamming search
 public:
   Table(int k) : lshFunc(k) {}
   Table() {} // used for serializing
@@ -43,11 +45,12 @@ public:
       unordered_set<long long int> lst; 
       lst.insert(label);
       index[hash] = lst;
+      indexKeys.push_back(hash);
     } else {
       pos->second.insert(label);
     }
   }
-  bool search(const vector<float>& feat, unordered_set<long long int>& output) const {
+  bool search_exact(const vector<float>& feat, unordered_set<long long int>& output) const {
     boost::dynamic_bitset<> hash = lshFunc.computeHash(feat);
     auto pos = index.find(hash);
     if (pos != index.end()) {
@@ -56,10 +59,28 @@ public:
     }
     return false;
   }
+  /**
+   * Hamming distance search
+   */
+  bool search(const vector<float>& feat, unordered_set<long long>& output) const {
+    output.clear();
+    vector<int> hamdists(indexKeys.size(), 0);
+    boost::dynamic_bitset<> hash = lshFunc.computeHash(feat);
+    #pragma omp parallel for
+    for (size_t i = 0; i < indexKeys.size(); i++) {
+      hamdists[i] = (indexKeys[i] ^ hash).count();
+    }
+    vector<size_t> order = argsort(hamdists);
+    for (size_t i = 0; i < 5000; i++) {
+      unordered_set<long long> match = index[indexKeys[order[i]]];
+      output.insert(match.begin(), match.end());
+    }
+  }
   template<class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     ar & lshFunc;
     ar & index;
+    ar & indexKeys;
   }
 };
 
