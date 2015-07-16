@@ -17,6 +17,7 @@
 #include <cmath>
 #include <functional>
 #include <chrono>
+#include <boost/dynamic_bitset.hpp>
 #include "config.hpp"
 
 using namespace std;
@@ -28,7 +29,7 @@ class LSHFunc_ITQ {
   int dim; // dimension of features
   Eigen::VectorXf mean; // for centering the data
   Eigen::MatrixXf R; // rotation matrix (ITQ)
-  Eigen::MatrixXf pc; // PCA embedding (the top-<dim> eigen vectors
+  Eigen::MatrixXf pc; // PCA embedding (the top-<nbits> eigen vectors)
   
 public:
   LSHFunc_ITQ(int _nbits): nbits(_nbits) {}
@@ -62,7 +63,7 @@ public:
     cout.flush();
     Eigen::MatrixXf cov = data.adjoint() * data;
     Eigen::SelfAdjointEigenSolver<Eigen::MatrixXf> eig(cov);
-    pc = eig.eigenvectors().rightCols(nbits);
+    pc = eig.eigenvectors().rightCols(nbits).rowwise().reverse();
     high_resolution_clock::time_point end = high_resolution_clock::now();
     cout << "Done in " << duration_cast<minutes>(end - start).count() << "min" << endl;
   }
@@ -72,7 +73,7 @@ public:
   }
   
   void pcaEmbed(Eigen::VectorXf& data) const {
-    data *= pc;
+    data = data.adjoint() * pc;
   }
 
   void genLSHfunc(const vector<vector<float>>& sampleDataAsVec, int nIter) {
@@ -103,29 +104,31 @@ public:
         }
       }
       Eigen::MatrixXf C = UX.adjoint() * sampleData;
-      Eigen::BDCSVD<Eigen::MatrixXf> svd2(C, Eigen::ComputeThinU | Eigen::ComputeThinV);
+      // Eigen::BDCSVD<Eigen::MatrixXf> svd2(C, Eigen::ComputeThinU | Eigen::ComputeThinV);
+      Eigen::JacobiSVD<Eigen::MatrixXf> svd2(C, Eigen::ComputeThinU | Eigen::ComputeThinV);
       R = svd2.matrixV() * svd2.matrixU().adjoint();
       high_resolution_clock::time_point end = high_resolution_clock::now();
-      cout << "Done in " << duration_cast<seconds>(end - start).count()
-           << "sec" << endl;
+      cout << "Done in " << duration_cast<milliseconds>(end - start).count()
+           << "ms" << endl;
     }
   }
 
-  void computeHash(const vector<float>& _feat, vector<bool>& hash) const {
+  boost::dynamic_bitset<> computeHash(const vector<float>& _feat) const {
+    boost::dynamic_bitset<> hash(nbits);
     if (_feat.size() == 0) {
-      return;
+      return hash; // all 0s!
     }
     hash.clear();
     Eigen::VectorXf feat = Eigen::VectorXf::Map(&_feat[0], _feat.size());
     #if NORMALIZE_FEATS == 1
       feat = feat / feat.norm(); // normalize the feature
     #endif
-    Eigen::VectorXf res = feat; // to overcome the const
-    pcaEmbed(res);
-    res = res * R;
-    for (int i = 0; i < res.cols(); i++) {
-      hash.push_back(res(i) > 0 ? true : false);
+    pcaEmbed(feat);
+    Eigen::VectorXf res = feat.adjoint() * R;
+    for (unsigned i = 0; i < res.rows(); i++) {
+      hash[i] = res(i) > 0 ? true : false;
     }
+    return hash;
   }
 
   template<class Archive>
