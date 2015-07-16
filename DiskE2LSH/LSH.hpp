@@ -36,12 +36,14 @@ public:
       tables[i].insert(feat, label);
     }
   }
-  void search(const vector<float>& feat, unordered_set<long long int>& output) const {
+  void search(const vector<float>& feat, 
+      unordered_set<long long int>& output,
+      int nRerank) const {
     output.clear();
 //    #pragma omp parallel for
     for (int i = 0; i < tables.size(); i++) {
       unordered_set<long long int> part;
-      tables[i].search(feat, part);
+      tables[i].search(feat, part, nRerank);
 //      #pragma omp critical
       output.insert(part.begin(), part.end());
     }

@@ -75,6 +75,11 @@ main(int argc, char *argv[]) {
      "output with duplicate images")
     ("num-output", po::value<int>()->default_value(100),
      "Max number of matches to return")
+    ("nRerank", po::value<int>()->default_value(5000),
+     "Max number of images to re-rank using actual features. "
+     "Determines the test time performance vs speed tradeoff. "
+     "Large n implies better results but slower performance.")
+
     ;
 
   po::variables_map vm;
@@ -95,6 +100,7 @@ main(int argc, char *argv[]) {
     fs::path(vm["model-path"].as<string>());
   string LAYER = vm["layer"].as<string>();
   fs::path SEG_IMG_PATH = fs::path(vm["seg-img"].as<string>());
+  int nRerank = vm["nRerank"].as<int>();
   bool DEPRECATED_MODEL = vm["deprecated-model"].as<bool>();
   vector<string> layers = {LAYER};
   vector<fs::path> imgslist;
@@ -169,7 +175,7 @@ main(int argc, char *argv[]) {
 
     unordered_set<long long int> init_matches;
     vector<pair<float, long long int>> res;
-    l->search(feats[0][0], init_matches);
+    l->search(feats[0][0], init_matches, nRerank);
     LOG(INFO) << "Re-sorting " << init_matches.size() << " matches";
     Resorter::resort_multicore(init_matches, featstor, feats[0][0], res);
     if (vm["duplist"].as<fs::path>().string().length() > 0) {

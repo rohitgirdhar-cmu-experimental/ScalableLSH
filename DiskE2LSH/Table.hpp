@@ -62,7 +62,7 @@ public:
   /**
    * Hamming distance search
    */
-  bool search(const vector<float>& feat, unordered_set<long long>& output) const {
+  bool search(const vector<float>& feat, unordered_set<long long>& output, int nRerank) const {
     output.clear();
     vector<int> hamdists(indexKeys.size(), 0);
     boost::dynamic_bitset<> hash = lshFunc.computeHash(feat);
@@ -71,8 +71,9 @@ public:
       hamdists[i] = (indexKeys[i] ^ hash).count();
     }
     vector<size_t> order = argsort(hamdists);
-    for (size_t i = 0; i < 5000; i++) {
-      unordered_set<long long> match = index[indexKeys[order[i]]];
+    for (size_t i = 0; i < nRerank; i++) {
+      // ref: http://stackoverflow.com/a/262872
+      unordered_set<long long> match = index.at(indexKeys[order[i]]);
       output.insert(match.begin(), match.end());
     }
   }
