@@ -211,7 +211,8 @@ void generateTrainData(const vector<int>& imgComputeIds,
       imid = getIndex(sel[i], 1);
     }
     vector<float> feat;
-    tree.Get(imid, feat);
-    outputTrainData.push_back(feat);
+    if (tree.Get(imid, feat)) {
+      outputTrainData.push_back(feat);
+    } // else it was not able to retrieve, so forget about it 
   }
 }
