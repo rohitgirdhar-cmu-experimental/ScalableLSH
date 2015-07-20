@@ -21,6 +21,7 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
+  google::InitGoogleLogging(argv[0]);
   po::options_description desc("Allowed options");
   desc.add_options()
     ("help,h", "Show this help")
@@ -56,6 +57,8 @@ int main(int argc, char* argv[]) {
      "Limit the number of matching feature that will be reranked."
      "If there are more than this number, that bounding box will be ignored"
      "(no results outputted). Default = -1 => no limits")
+    ("nRerank", po::value<int>()->default_value(5000),
+     "Number of images from the pre-ranking to re-sort")
     ;
 
   po::variables_map vm;
@@ -70,7 +73,8 @@ int main(int argc, char* argv[]) {
     cerr << e.what() << endl;
     return -1;
   }
-  
+ 
+  int nRerank = vm["nRerank"].as<int>();
   // read the list of images to hash
   vector<fs::path> imgslst;
   readList(vm["dimgslist"].as<string>(), imgslst);
@@ -95,30 +99,12 @@ int main(int argc, char* argv[]) {
     cout.flush();
     ifstream ifs(vm["load"].as<string>(), ios::binary);
     boost::archive::binary_iarchive ia(ifs);
-    l = new LSH(0,0,0); // need to create this dummy obj, don't know how else...
+    l = new LSH(0,0); // need to create this dummy obj, don't know how else...
     ia >> *l;
     cout << "done." << endl;
   } else if (vm.count("datapath")) {
-    l = new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>(), 9216);
-    vector<float> feat;
-    
-    high_resolution_clock::time_point pivot = high_resolution_clock::now();
-    DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1);
-    for (int i = 0; i < imgslst.size(); i++) {
-      for (int j = 0; j < featcounts[i]; j++) {
-        int idx = i * MAXFEATPERIMG + j;
-        if (!tree.Get(idx, feat)) break;
-        l->insert(feat, idx);
-      }
-      if (i % 10 == 0) {
-        high_resolution_clock::time_point pivot2 = high_resolution_clock::now();
-        cout << "Done for " << i + 1  << "/" << imgslst.size()
-             << " in " 
-             << duration_cast<seconds>(pivot2 - pivot).count()
-             << "s" <<endl;
-        pivot = pivot2;
-      }
-    }
+    cerr << "Use buildIndex to create the index." << endl;
+    return -1;
   }
 
   if (vm.count("save")) {
@@ -201,7 +187,7 @@ int main(int argc, char* argv[]) {
         if (BFORCE) {
           temp = searchspace;
         } else {
-          l->search(feat, temp);
+          l->search(feat, temp, nRerank);
         }
         
         // enforce limit on number of features that get re-ranked

@@ -208,11 +208,15 @@ int readFromURL(const string& url, Mat& I) {
 }
 
 string convertToFname(long long idx, const vector<fs::path>& imgslist) {
-  return imgslist[idx / MAXFEATPERIMG - 1].filename().string();
+  size_t txid = idx / MAXFEATPERIMG - 1;
+  CHECK_GT(imgslist.size(), txid) << "File doesn't have enough lines";
+  return imgslist[txid].filename().string();
 }
 
 string convertToFname_DEPRECATED(long long idx, const vector<fs::path>& imgslist) {
-  return imgslist[idx / MAXFEATPERIMG].filename().string();
+  size_t txid = idx / MAXFEATPERIMG;
+  CHECK_GT(imgslist.size(), txid) << "File doesn't have enough lines";
+  return imgslist[txid].filename().string();
 }
 
 void runSegmentationCode() {
