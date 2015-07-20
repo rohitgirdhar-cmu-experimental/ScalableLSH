@@ -33,9 +33,10 @@ namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 int readFromURL(const string&, Mat&);
-string convertToFname(long long idx, const vector<fs::path>& imgslist);
-string convertToFname_DEPRECATED(long long idx, const vector<fs::path>& imgslist);
+string convertToFname(long long idx, const vector<fs::path>& imgslist, int);
+string convertToFname_DEPRECATED(long long idx, const vector<fs::path>& imgslist, int);
 void runSegmentationCode();
+string getPartsFromFilePath(const fs::path& fpath, int nparts);
 
 int
 main(int argc, char *argv[]) {
@@ -79,7 +80,8 @@ main(int argc, char *argv[]) {
      "Max number of images to re-rank using actual features. "
      "Determines the test time performance vs speed tradeoff. "
      "Large n implies better results but slower performance.")
-
+    ("nPathParts", po::value<int>()->default_value(1),
+     "Number of parts of the image fpath (from image file list) to print out")
     ;
 
   po::variables_map vm;
@@ -94,7 +96,9 @@ main(int argc, char *argv[]) {
     LOG(ERROR) << e.what();
     return -1;
   }
- 
+  
+  int nPathParts = vm["nPathParts"].as<int>();
+  LOG(INFO) << "Printing " << nPathParts << " of filenames to output";
   fs::path NETWORK_PATH = fs::path(vm["network-path"].as<string>());
   fs::path MODEL_PATH = 
     fs::path(vm["model-path"].as<string>());
@@ -187,8 +191,8 @@ main(int argc, char *argv[]) {
 
     for (int i = 0; i < min(res.size(), (size_t) num_output); i++) {
       oss << res[i].first << ":" 
-          << (DEPRECATED_MODEL ? convertToFname_DEPRECATED(res[i].second, imgslist)
-                               : convertToFname(res[i].second, imgslist)) 
+          << (DEPRECATED_MODEL ? convertToFname_DEPRECATED(res[i].second, imgslist, nPathParts)
+                               : convertToFname(res[i].second, imgslist, nPathParts)) 
           << ',';
     }
     zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
@@ -207,16 +211,27 @@ int readFromURL(const string& url, Mat& I) {
   return ret;
 }
 
-string convertToFname(long long idx, const vector<fs::path>& imgslist) {
+string convertToFname(long long idx, const vector<fs::path>& imgslist, int nparts) {
   size_t txid = idx / MAXFEATPERIMG - 1;
   CHECK_GT(imgslist.size(), txid) << "File doesn't have enough lines";
-  return imgslist[txid].filename().string();
+  return getPartsFromFilePath(imgslist[txid], nparts);
 }
 
-string convertToFname_DEPRECATED(long long idx, const vector<fs::path>& imgslist) {
+string convertToFname_DEPRECATED(long long idx, const vector<fs::path>& imgslist, int nparts) {
   size_t txid = idx / MAXFEATPERIMG;
   CHECK_GT(imgslist.size(), txid) << "File doesn't have enough lines";
-  return imgslist[txid].filename().string();
+  return getPartsFromFilePath(imgslist[txid], nparts);
+}
+
+string getPartsFromFilePath(const fs::path& fpath, int nparts) {
+  if (nparts == 1) {
+    return fpath.filename().string();
+  } else if (nparts == -1) {
+    // return the whole thing
+    return fpath.string();
+  } else {
+    LOG(FATAL) << "nparts = " << nparts << " is not implemented.";
+  }
 }
 
 void runSegmentationCode() {
