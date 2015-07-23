@@ -36,7 +36,7 @@ void readList(const fs::path& fpath, vector<Dtype>& output) {
   ifs.close();
 }
 
-void getAllSearchspace(const vector<int>& featcounts,
+void getAllSearchspace(const vector<unsigned>& featcounts,
     unordered_set<long long int>& searchspace) {
   searchspace.clear();
   for (long long int i = 1; i <= featcounts.size(); i++) {

@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
   // read the list of images to hash
   vector<fs::path> imgslst;
   readList(vm["dimgslist"].as<string>(), imgslst);
-  vector<int> featcounts(imgslst.size(), 1); // default: 1 feat/image
+  vector<unsigned> featcounts(imgslst.size(), 1); // default: 1 feat/image
   if (vm["featcount"].as<string>().length() > 0) {
     featcounts.clear();
     readList(vm["featcount"].as<string>(), featcounts);
