@@ -8,7 +8,7 @@ CPU_ONLY := 0
 
 CXXFLAGS += -std=c++0x -fopenmp -O2 -g
 LIBS += -L$(CAFFE_ROOT)/build/lib -L/usr/local/lib/ -L/home/rgirdhar/data/Software/cpp/boost_1_57_0/stage/lib/
-LDFLAGS += -lcaffe -lglog -lboost_program_options -lboost_filesystem -lboost_system -lboost_serialization -llmdb
+LDFLAGS += -lcaffe -lglog -lboost_program_options -lboost_filesystem -lboost_system -lboost_serialization -llmdb -lz
 INC += -I$(CAFFE_ROOT)/include/ -I$(CAFFE_ROOT)/build/src/ -I/usr/local/include/opencv2/ -I/home/rgirdhar/data/Software/cpp/boost_1_57_0/
 
 # for the feature extraction utils.hpp

@@ -71,6 +71,9 @@ main(int argc, char *argv[]) {
     ("deprecated-model,d", po::bool_switch()->default_value(false),
      "Set if using a deprecated model, which has images indexed from "
      "0. In future, all image ids, and box ids are 1 indexed")
+    ("compressedFeatStor", po::bool_switch()->default_value(false),
+     "Set if using a compressed feature store. This can't currently "
+     "read this information from the lmdb")
     ("duplist", po::value<fs::path>()->default_value(""),
      "Path to list with unique/duplicate entried. Will augment the "
      "output with duplicate images")
@@ -126,7 +129,7 @@ main(int argc, char *argv[]) {
 
   LOG(INFO) << "Setting up the server...";
   auto featstor = std::shared_ptr<DiskVectorLMDB<vector<float>>>(
-      new DiskVectorLMDB<vector<float>>(vm["featstor"].as<string>(), 1));
+      new DiskVectorLMDB<vector<float>>(vm["featstor"].as<string>(), 1, vm["compressedFeatStor"].as<bool>()));
 
   //  Socket to talk to clients
   void *context = zmq_ctx_new();
