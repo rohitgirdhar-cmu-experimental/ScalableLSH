@@ -1,3 +1,6 @@
 [submodule "DiskE2LSH/storage"]
 	path = DiskE2LSH/storage
 	url = git@github.com:rohitgirdhar-cmu-experimental/DiskVector.git
+[submodule "DiskE2LSH/Eigen"]
+	path = DiskE2LSH/Eigen
+	url = git@github.com:RLovelett/eigen.git
