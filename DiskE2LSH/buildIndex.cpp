@@ -20,8 +20,9 @@ namespace po = boost::program_options;
 long long getIndex(long long, int); // both must be 1 indexed
 long long getIndex_DEPRECATED(long long, int); // both must be 1 indexed
 void readUniqueList(const fs::path& fpath, vector<int>& imgIds);
-void generateTrainData(const vector<int>&, const DiskVectorLMDB<vector<float>>&, 
-    vector<vector<float>>&, bool deprecated_stor, int nTrain);
+void generateTrainData(const vector<int>&, const vector<int>&, 
+    const DiskVectorLMDB<vector<float>>&, vector<vector<float>>&, 
+    bool deprecated_stor, int nTrain);
 
 int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);  
@@ -108,7 +109,7 @@ int main(int argc, char* argv[]) {
     cout << "Loaded the search model for update" << endl;
   } else {
     vector<vector<float>> trainData;
-    generateTrainData(imgComputeIds, tree, trainData, deprecated_stor, nTrain);
+    generateTrainData(imgComputeIds, featcounts, tree, trainData, deprecated_stor, nTrain);
     cout << "Generated " << trainData.size() 
          << " training data. Starting to train..." << endl;
     l->train(trainData);
@@ -192,26 +193,27 @@ void readUniqueList(const fs::path& fpath, vector<int>& imgIds) {
   fin.close();
 }
 
-void generateTrainData(const vector<int>& imgComputeIds,
+void generateTrainData(const vector<int>& imgComputeIDs, const vector<int>& featcounts,
     const DiskVectorLMDB<vector<float>>& tree, vector<vector<float>>& outputTrainData,
     bool deprecated_stor, int nTrain) {
-  // select randomly nTrain elements from imgComputeIds and push into trainIDs
-  // TODO (rgirdhar): Note that this only takes the top (1) window from each image.
-  // So, for multiple windows, it misses everything else. In future, fix this. 
-  // Ideally, randomly select over all windows.
-  // It was implemented this way for the full image indexes first.
-  nTrain = min(nTrain, (int) imgComputeIds.size());
-  vector<int> sel = imgComputeIds;
-  random_shuffle(sel.begin(), sel.end());
-  for (int i = 0; i < nTrain; i++) {
-    long long imid;
-    if (deprecated_stor) {
-      imid = getIndex_DEPRECATED(sel[i], 1);
-    } else {
-      imid = getIndex(sel[i], 1);
+  // select randomly nTrain elements from all patches and push into outputTrainData
+  vector<long long> allfeatids;
+  for (int i = 0; i < imgComputeIDs.size(); i++) {
+    for (int j = 1; j <= featcounts[i]; j++) {
+      long long imid;
+      if (deprecated_stor) {
+        imid = getIndex_DEPRECATED(imgComputeIDs[i], j);
+      } else {
+        imid = getIndex(imgComputeIDs[i], j);
+      }
+      allfeatids.push_back(imid);
     }
+  }
+  random_shuffle(allfeatids.begin(), allfeatids.end());
+  nTrain = min(nTrain, (int) allfeatids.size());
+  for (int i = 0; i < nTrain; i++) {
     vector<float> feat;
-    if (tree.Get(imid, feat)) {
+    if (tree.Get(allfeatids[i], feat)) {
       outputTrainData.push_back(feat);
     } // else it was not able to retrieve, so forget about it 
   }
