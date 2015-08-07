@@ -1,7 +1,7 @@
 CPPFLAGS += -std=c++0x -fopenmp -g -O2 -llmdb
-LDFLAGS += -lleveldb -lboost_serialization -lboost_system -lboost_program_options -lboost_filesystem -lglog -lz
-LIBS += -L ~/Software/utils/leveldb/ -L /home/rgirdhar/data/Software/cpp/boost_1_57_0/stage/lib/
-INC += -I ~/Software/utils/leveldb/include/ -I /home/rgirdhar/data/Software/cpp/boost_1_57_0/ -I Eigen/
+LDFLAGS += -lleveldb -lboost_serialization -lboost_system -lboost_program_options -lboost_filesystem -lglog -lz -lzmq -llmdb
+LIBS += -L/mnt/data/Softwares/CPP/boost/boost_1_57_0/stage/lib/ -L/mnt/data/Softwares/CPP/zmq/install/lib/ -L/mnt/data/Softwares/CPP/lmdb/libraries/liblmdb/
+INC += -I/mnt/data/Softwares/CPP/boost/boost_1_57_0/ -IEigen/ -I/mnt/data/Softwares/CPP/zmq/install/include/ -I/mnt/data/Softwares/CPP/cppzmq/ -I/mnt/data/Softwares/CPP/lmdb/libraries/liblmdb/
 
 all: buildIndex.bin main.bin
 
