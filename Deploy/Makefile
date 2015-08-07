@@ -4,7 +4,13 @@
 CAFFE_ROOT := ../../ComputeFeatures/Features/CNN/external/caffe
 FEAT_EXT_CODE_ROOT := ../../ComputeFeatures/Features/CNN/ver2
 CUDA_ROOT := /usr/local/cuda
-CPU_ONLY := 0
+CPU_ONLY := 1
+
+# for the zmq
+INC += -I/mnt/data/Softwares/CPP/zmq/install/include/
+INC += -I/mnt/data/Softwares/CPP/cppzmq
+LIBS += -L/mnt/data/Softwares/CPP/zmq/install/lib/
+LDFLAGS += -lzmq -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
 
 # for the zmq
 INC += -I/mnt/data/Softwares/CPP/zmq/install/include/
