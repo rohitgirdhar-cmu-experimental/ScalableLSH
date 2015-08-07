@@ -14,6 +14,7 @@
 #include <boost/algorithm/string.hpp> // for to_lower
 #include <boost/archive/binary_oarchive.hpp>
 #include <errno.h>
+#include <curl/curl.h>
 #include "caffe/caffe.hpp"
 #include "utils.hpp"
 // from the search code
@@ -32,7 +33,7 @@ using namespace cv;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-int readFromURL(const string&, Mat&);
+Mat readFromURL(const string&);
 string convertToFname(long long idx, const vector<fs::path>& imgslist, int);
 string convertToFname_DEPRECATED(long long idx, const vector<fs::path>& imgslist, int);
 void runSegmentationCode();
@@ -148,9 +149,9 @@ main(int argc, char *argv[]) {
     high_resolution_clock::time_point st = high_resolution_clock::now();
 
     vector<Mat> Is;
-    Mat I;
-    int ret_value = readFromURL(string(buffer), I);
-    if (!I.data || ret_value != 0) {
+    Mat I = readFromURL(string(buffer));
+    if (!I.data) {
+      LOG(ERROR) << "Unable to read " << buffer;
       oss << "Unable to read " << buffer;
       zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
       continue;
@@ -207,11 +208,41 @@ main(int argc, char *argv[]) {
   return 0;
 }
 
+/*
 int readFromURL(const string& url, Mat& I) {
   string temppath = TMP_PATH;
   int ret = system((string("wget --no-check-certificate ") + url + " -O " + temppath).c_str());
   I = imread(temppath.c_str());
   return ret;
+}
+*/
+
+//curl writefunction to be passed as a parameter
+size_t write_data(char *ptr, size_t size, size_t nmemb, void *userdata) {
+    std::ostringstream *stream = (std::ostringstream*)userdata;
+    size_t count = size * nmemb;
+    stream->write(ptr, count);
+    return count;
+}
+
+//function to retrieve the image as Cv::Mat data type
+Mat readFromURL(const string& url) {
+  CURL *curl;
+  CURLcode res;
+  std::ostringstream stream;
+  curl = curl_easy_init();
+  curl_easy_setopt(curl, CURLOPT_URL, url.c_str()); //the img url
+  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); //don't verify
+  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); //don't verify
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data); // pass the writefunction
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream); // pass the stream ptr when the writefunction is called
+  res = curl_easy_perform(curl); // start curl
+  std::string output = stream.str(); // convert the stream into a string
+  curl_easy_cleanup(curl); // cleanup
+  std::vector<char> data = std::vector<char>( output.begin(), output.end() ); //convert string into a vector
+  cv::Mat data_mat = cv::Mat(data); // create the cv::Mat datatype from the vector
+  cv::Mat image = cv::imdecode(data_mat,1); //read an image from memory buffer
+  return image;
 }
 
 string convertToFname(long long idx, const vector<fs::path>& imgslist, int nparts) {
