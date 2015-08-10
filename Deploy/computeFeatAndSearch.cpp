@@ -24,7 +24,6 @@
 #include <zmq.h>
 
 #define MAXFEATPERIMG 10000
-#define TMP_PATH "./temp-dir/temp-img.jpg" // MUST EXIST
 
 using namespace std;
 using namespace std::chrono;
