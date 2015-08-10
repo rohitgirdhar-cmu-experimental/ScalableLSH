@@ -232,8 +232,9 @@ Mat readFromURL(const string& url) {
   std::ostringstream stream;
   curl = curl_easy_init();
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str()); //the img url
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); //don't verify
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); //don't verify
+  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L); // don't verify
+  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L); // don't verify
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L); // follow re-directs
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data); // pass the writefunction
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &stream); // pass the stream ptr when the writefunction is called
   res = curl_easy_perform(curl); // start curl
