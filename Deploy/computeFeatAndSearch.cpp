@@ -24,6 +24,7 @@
 #include <zmq.h>
 
 #define MAXFEATPERIMG 10000
+#define TMP_PATH "./temp-dir/temp-img.jpg"
 
 using namespace std;
 using namespace std::chrono;
@@ -158,6 +159,13 @@ main(int argc, char *argv[]) {
 
     vector<Rect> bboxes;
     if (SEG_IMG_PATH.string().length() > 0) {
+      if (! imwrite(TMP_PATH, I)) {
+        oss << "Unable to write query image to " << TMP_PATH 
+             << " to run segmentation service";
+        cerr << oss.str() << endl;
+        zmq_send(responder, oss.str().c_str(), oss.str().length(), 0);
+        continue;
+      }
       runSegmentationCode();
       Mat S; // not really used
       CNNFeatureUtils::genSlidingWindows(I.size(), bboxes);
