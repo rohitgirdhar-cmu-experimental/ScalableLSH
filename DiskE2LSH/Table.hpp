@@ -71,7 +71,7 @@ public:
       hamdists[i] = (indexKeys[i] ^ hash).count();
     }
     vector<size_t> order = argsort(hamdists);
-    for (size_t i = 0; i < nRerank; i++) {
+    for (size_t i = 0; i < min(hamdists.size(), (size_t) nRerank); i++) {
       // ref: http://stackoverflow.com/a/262872
       unordered_set<long long> match = index.at(indexKeys[order[i]]);
       output.insert(match.begin(), match.end());
