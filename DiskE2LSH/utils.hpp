@@ -40,7 +40,7 @@ void getAllSearchspace(const vector<unsigned>& featcounts,
     unordered_set<long long int>& searchspace) {
   searchspace.clear();
   for (long long int i = 1; i <= featcounts.size(); i++) {
-    for (long long int j = 1; j <= featcounts[i]; j++) {
+    for (long long int j = 1; j <= featcounts[i - 1]; j++) {
       searchspace.insert(i * MAXFEATPERIMG + j);
     }
   }
