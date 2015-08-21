@@ -59,6 +59,8 @@ int main(int argc, char* argv[]) {
      "(no results outputted). Default = -1 => no limits")
     ("nRerank", po::value<int>()->default_value(5000),
      "Number of images from the pre-ranking to re-sort")
+    ("simMetric", po::value<string>()->default_value("cosine"),
+     "Pick similarity metric to be used for resorting [cosine/euclidean]")
     ;
 
   po::variables_map vm;
@@ -85,6 +87,15 @@ int main(int argc, char* argv[]) {
   }
   
   bool BFORCE = vm["bruteforce"].as<bool>();
+  int simMetric;
+  if (vm["simMetric"].as<string>().compare("cosine") == 0) {
+    simMetric = SIM_METRIC_COSINE;
+  } else if (vm["simMetric"].as<string>().compare("euclidean") == 0) {
+    simMetric = SIM_METRIC_EUCLIDEAN;
+  } else {
+    cerr << "Distance metric not implemented!!!" << endl;
+    return -1;
+  }
   unordered_set<long long int> searchspace;
   LSH *l = NULL;
   if (BFORCE) {
@@ -197,7 +208,7 @@ int main(int argc, char* argv[]) {
           continue;
         }
         
-        Resorter::resort_multicore(temp, featstor, feat, res);
+        Resorter::resort_multicore(temp, featstor, feat, res, simMetric);
         allres[j] = vector<pair<float, long long int>>(res.begin(), 
             min(res.begin() + vm["topk"].as<int>(), res.end()));
         high_resolution_clock::time_point t2 = high_resolution_clock::now();
