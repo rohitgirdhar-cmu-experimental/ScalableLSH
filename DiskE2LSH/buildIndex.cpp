@@ -200,7 +200,7 @@ void generateTrainData(const vector<int>& imgComputeIDs, const vector<int>& feat
   // select randomly nTrain elements from all patches and push into outputTrainData
   vector<long long> allfeatids;
   for (int i = 0; i < imgComputeIDs.size(); i++) {
-    for (int j = 1; j <= featcounts[i]; j++) {
+    for (int j = 1; j <= featcounts[imgComputeIDs[i] - 1]; j++) {
       long long imid;
       if (deprecated_stor) {
         imid = getIndex_DEPRECATED(imgComputeIDs[i], j);

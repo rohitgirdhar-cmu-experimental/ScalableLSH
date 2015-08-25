@@ -10,6 +10,9 @@
 #include <cmath>
 
 #define MAX_RESORT_BATCH_SIZE 10000 // resort these many at a time
+// Similarity Metrics
+#define SIM_METRIC_COSINE 1
+#define SIM_METRIC_EUCLIDEAN 2
 
 class Resorter {
 public:
@@ -85,7 +88,8 @@ public:
   void static resort_multicore(const unordered_set<long long int>& matches, 
       const std::shared_ptr<DiskVectorLMDB<vector<float>>>& feats,
       vector<float>& qfeat,
-      vector<pair<float, long long int>>& res) {
+      vector<pair<float, long long int>>& res,
+      int simMetric = SIM_METRIC_COSINE) {
     res.clear();
     vector<long long int> matches_vec(matches.begin(), matches.end());
     if (matches.size() == 0) {
@@ -97,6 +101,7 @@ public:
       L2Normalize(qfeat);
     #endif
     Eigen::MatrixXf qfeat_mat = Eigen::VectorXf::Map(&qfeat[0], qfeat.size());
+    qfeat_mat.normalize();
     
     int nMatches = matches.size();
     vector<float> scores(nMatches, 0);
@@ -112,8 +117,21 @@ public:
         L2Normalize(temp);
       #endif
       Eigen::MatrixXf match_mat = Eigen::VectorXf::Map(&temp[0], temp.size());
-      Eigen::MatrixXf cos = qfeat_mat.transpose() * match_mat;
-      scores[i] = cos(0); 
+      if (simMetric == SIM_METRIC_COSINE) {
+        Eigen::MatrixXf sim = qfeat_mat.transpose() * match_mat;
+        scores[i] = sim(0); 
+      } else if (simMetric == SIM_METRIC_EUCLIDEAN) {
+        match_mat.normalize();
+        // since I need similarity, and 2 is the max distance between
+        // any 2 unit vectors under any metric distance (triangle ineq)
+        scores[i] = 2.0f - (qfeat_mat - match_mat).norm();
+        if (scores[i] < 0) {
+          
+        }
+      } else {
+        cerr << "Distance metric not implemented!" << endl;
+        scores[i] = -1;
+      }
     }
 
     for (int i = 0; i < nMatches; i++) {
