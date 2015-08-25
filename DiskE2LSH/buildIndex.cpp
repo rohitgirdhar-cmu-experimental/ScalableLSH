@@ -60,6 +60,8 @@ int main(int argc, char* argv[]) {
     ("duplist", po::value<fs::path>()->default_value(""),
      "Path to list with unique/duplicate entries. Will build index "
      "only for entries which start with 'U'")
+    ("compressedFeatStor", po::bool_switch()->default_value(false),
+     "Set this flag if the data store contains compressed features")
     ;
 
   po::variables_map vm;
@@ -80,9 +82,8 @@ int main(int argc, char* argv[]) {
   int printafter = vm["printafter"].as<int>();
   int nTrain = vm["nTrain"].as<int>();
   bool deprecated_stor = vm["deprecated-stor"].as<bool>();
-  vector<fs::path> imgslst;
-  readList(vm["imgslist"].as<string>(), imgslst);
-  vector<int> featcounts(imgslst.size(), 1); // default: 1 feat/image
+  int imgslst_size = countNewlines(vm["imgslist"].as<string>());
+  vector<int> featcounts(imgslst_size, 1); // default: 1 feat/image
   if (vm["featcount"].as<string>().length() > 0) {
     featcounts.clear();
     readList(vm["featcount"].as<string>(), featcounts);
@@ -94,12 +95,12 @@ int main(int argc, char* argv[]) {
     readUniqueList(vm["duplist"].as<fs::path>(), imgComputeIds);
   } else {
     // all images
-    for (int i = 1; i <= imgslst.size(); i++) {
+    for (int i = 1; i <= imgslst_size; i++) {
       imgComputeIds.push_back(i);
     }
   }
   
-  DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1);
+  DiskVectorLMDB<vector<float>> tree(vm["datapath"].as<string>(), 1, vm["compressedFeatStor"].as<bool>());
 
   std::shared_ptr<LSH> l(new LSH(vm["nbits"].as<int>(), vm["ntables"].as<int>()));
   if (vm.count("load")) {
