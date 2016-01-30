@@ -145,5 +145,12 @@ vector<size_t> argsort(const vector<T> &v) {
   return idx;
 }
 
+long long countNewlines(fs::path fpath) {
+  ifstream fin(fpath.string());
+  long long res = count(istreambuf_iterator<char>(fin), istreambuf_iterator<char>(), '\n');
+  fin.close();
+  return res;
+}
+
 #endif
 
