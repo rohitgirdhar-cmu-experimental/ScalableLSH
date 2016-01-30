@@ -7,9 +7,9 @@ CUDA_ROOT := /usr/local/cuda
 CPU_ONLY := 0
 
 CXXFLAGS += -std=c++0x -fopenmp -O2 -g
-LIBS += -L$(CAFFE_ROOT)/build/lib -L/usr/local/lib/ -L/home/rgirdhar/data/Software/cpp/boost_1_57_0/stage/lib/
+LIBS += -L$(CAFFE_ROOT)/build/lib -L/usr/local/lib/ -L/home/rgirdhar/data/Software/cpp/boost_1_57_0/stage/lib/ `pkg-config --libs /srv2/rgirdhar/Software/vision/opencv3_install/lib/pkgconfig/opencv.pc` 
 LDFLAGS += -lcaffe -lglog -lboost_program_options -lboost_filesystem -lboost_system -lboost_serialization -llmdb -lz -lcurl
-INC += -I$(CAFFE_ROOT)/include/ -I$(CAFFE_ROOT)/build/src/ -I/usr/local/include/opencv2/ -I/home/rgirdhar/data/Software/cpp/boost_1_57_0/
+INC += -I$(CAFFE_ROOT)/include/ -I$(CAFFE_ROOT)/build/src/ -I/srv2/rgirdhar/Software/vision/opencv3_install/include -I/home/rgirdhar/data/Software/cpp/boost_1_57_0/ `pkg-config --cflags /srv2/rgirdhar/Software/vision/opencv3_install/lib/pkgconfig/opencv.pc`
 
 # for the feature extraction utils.hpp
 INC += -I$(FEAT_EXT_CODE_ROOT)
@@ -22,7 +22,7 @@ INC += -I$(SEARCH_CODE_PATH) -I$(SEARCH_CODE_PATH)/Eigen
 INC += -I/home/rgirdhar/data/Software/cpp/zeromq/install/include/
 INC += -I/home/rgirdhar/data/Software/cpp/zeromq/cppzmq/
 LIBS += -L/home/rgirdhar/data/Software/cpp/zeromq/install/lib/
-LDFLAGS += -lzmq -lopencv_core -lopencv_imgproc -lopencv_imgcodecs
+LDFLAGS += -lzmq
 
 
 ifneq ($(CPU_ONLY),1)
@@ -30,8 +30,10 @@ ifneq ($(CPU_ONLY),1)
     INC += -I$(CUDA_ROOT)/include
     LDFLAGS += -lcudart -lcublas -lcurand
 else
-	CPPFLAGS += -DCPU_ONLY
+	CXXFLAGS += -DCPU_ONLY
 endif
+
+CXXFLAGS += -DUSE_OPENCV
 
 all: $(patsubst %.cpp, %.bin, $(wildcard *.cpp))
 

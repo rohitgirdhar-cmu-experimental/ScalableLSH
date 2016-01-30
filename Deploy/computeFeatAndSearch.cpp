@@ -249,7 +249,13 @@ Mat readFromURL(const string& url) {
   curl_easy_cleanup(curl); // cleanup
   std::vector<char> data = std::vector<char>( output.begin(), output.end() ); //convert string into a vector
   cv::Mat data_mat = cv::Mat(data); // create the cv::Mat datatype from the vector
-  cv::Mat image = cv::imdecode(data_mat,1); //read an image from memory buffer
+  cv::Mat image = cv::Mat::zeros(3,3, CV_8UC3);
+  try {
+    image = cv::imdecode(data_mat,1); //read an image from memory buffer
+  } catch (cv::Exception& e) {
+    LOG(ERROR) << "Unable to decode the image from " << url;
+    LOG(ERROR) << "Returning black image";
+  }
   return image;
 }
 
