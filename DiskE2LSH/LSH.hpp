@@ -53,6 +53,9 @@ public:
     ar & tables; 
     ar & lastLabelInserted;
   }
+  Table getTable(int idx) {
+    return tables[idx];
+  }
 };
 
 #endif

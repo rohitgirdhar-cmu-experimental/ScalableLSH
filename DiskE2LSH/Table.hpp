@@ -83,6 +83,9 @@ public:
     ar & index;
     ar & indexKeys;
   }
+  vector<boost::dynamic_bitset<>> getIndexKeys() {
+    return indexKeys;
+  } 
 };
 
 /**
