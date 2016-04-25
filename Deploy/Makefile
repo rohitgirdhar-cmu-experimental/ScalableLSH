@@ -1,8 +1,10 @@
 # Segent the following:
 #CAFFE_INSTALL_DIR = /IUS/homes4/rohytg/software/caffe_install
 #CAFFE_ROOT := /home/rgirdhar/data/Work/Code/0001_FeatureExtraction/ComputeFeatures/Features/CNN/external/caffe_dev_MemLayerWithMat
-CAFFE_ROOT := ../../ComputeFeatures/Features/CNN/external/caffe
-FEAT_EXT_CODE_ROOT := ../../ComputeFeatures/Features/CNN/ver2
+#CAFFE_ROOT := ../../ComputeFeatures/Features/CNN/external/caffe
+CAFFE_ROOT := ../../../../0001_FeatureExtraction/ComputeFeatures/Features/CNN/external/caffe
+#FEAT_EXT_CODE_ROOT := ../../ComputeFeatures/Features/CNN/ver2
+FEAT_EXT_CODE_ROOT := ../../../../0001_FeatureExtraction/ComputeFeatures/Features/CNN/ver2
 CUDA_ROOT := /usr/local/cuda
 CPU_ONLY := 0
 
